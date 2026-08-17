@@ -22,6 +22,7 @@
   "files": [
     "lib",
     "README.md",
+    "README.zh.md",
     "LICENSE",
     "examples"
   ],
@@ -49,6 +50,7 @@
     "test:host": "node scripts/host-mix-test.mjs",
     "test:client": "node scripts/client-loader-test.mjs",
     "check": "pnpm typecheck && pnpm test && pnpm build",
+    "prepare": "pnpm build",
     "prepublishOnly": "pnpm check"
   },
   "keywords": [
@@ -105,6 +107,14 @@
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/komoai2026/dsh-kolmopdf.git"
+  },
+  "homepage": "https://github.com/komoai2026/dsh-kolmopdf#readme",
+  "bugs": {
+    "url": "https://github.com/komoai2026/dsh-kolmopdf/issues"
   },
   "publishConfig": {
     "access": "public"

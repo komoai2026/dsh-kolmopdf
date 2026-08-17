@@ -6,3 +6,4 @@ coverage/
 kolmopdf-output/
 .pnpm-store/
 .tmp-cli-settings.yaml
+.dsh
