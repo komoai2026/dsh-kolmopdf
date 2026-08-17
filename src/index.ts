@@ -18,7 +18,7 @@ export function apply(ctx: Context, config: PluginConfig): void {
   ctx.systemPrompt.section({
     name: "tool:kolmopdf",
     order: 115,
-    text: "Use the KolmoPDF tools for high-fidelity PDF parsing, layout-preserving PDF translation, Markdown document conversion, cost estimates, and balance checks. When a tool says the API key is missing, tell the user to open Settings → KolmoPDF or run `kolmopdf config set-key`; never ask them to paste a secret into chat unless they explicitly choose to.",
+    text: "Use the KolmoPDF tools for high-fidelity PDF parsing, layout-preserving PDF translation, Markdown document conversion, cost estimates, and balance checks. When a tool says the API key is missing, tell the user to open Settings → KolmoPDF or run `dsh plugin --profile web exec kolmopdf -- config set-key`; never ask them to paste a secret into chat unless they explicitly choose to.",
   });
 
   registerKolmoPdfTools(ctx, () => current());

@@ -26,7 +26,7 @@ const zh = {
   cleared: "API Key 已清除。",
   empty: "请输入 API Key。",
   readOnly: "当前 Key 由环境变量提供，设置页无法修改。",
-  cli: "也可通过 CLI 配置：kolmopdf config set-key",
+  cli: "也可通过 CLI 配置：dsh plugin --profile web exec kolmopdf -- config set-key",
   account: "可在 https://www.kolmopdf.com/api-keys 创建 API Key（需要 Plus/Pro 账户）。",
   failed: "设置操作失败",
 };
@@ -48,7 +48,7 @@ const en: typeof zh = {
   cleared: "API key cleared.",
   empty: "Enter an API key.",
   readOnly: "The key is provided by the environment; it cannot be changed here.",
-  cli: "You can also configure it from a terminal: kolmopdf config set-key",
+  cli: "You can also configure it from a terminal: dsh plugin --profile web exec kolmopdf -- config set-key",
   account: "Create a key at https://www.kolmopdf.com/api-keys (Plus/Pro account required).",
   failed: "Settings operation failed",
 };

@@ -88,32 +88,32 @@ dsh web
 
 ### 方法二：CLI
 
-安装包后：
+安装包后，请通过 DeepSeek Harness 调用 CLI（直接打 `kolmopdf` 会提示找不到命令，因为它不在全局 PATH 上）：
 
 ```bash
-kolmopdf config set-key
+dsh plugin --profile web exec kolmopdf -- config set-key
 ```
 
 命令会用遮罩输入读取 Key，并写入 `$DSH_HOME/settings.yaml`（默认 `~/.dsh/settings.yaml`）中的 `kolmopdf.apiKey`。
 
 ```bash
 # 非交互传参（会进入 shell history，不推荐）
-kolmopdf config set-key sk-xxxxxxxxxxxxxxxx
+dsh plugin --profile web exec kolmopdf -- config set-key sk-xxxxxxxxxxxxxxxx
 
 # 脚本/CI：从 stdin 读取
-printf '%s' "$KOLMOPDF_API_KEY" | kolmopdf config set-key
+printf '%s' "$KOLMOPDF_API_KEY" | dsh plugin --profile web exec kolmopdf -- config set-key
 
 # 查看状态（不会输出 Key）
-kolmopdf config status
+dsh plugin --profile web exec kolmopdf -- config status
 
 # 查看实际设置文件路径
-kolmopdf config path
+dsh plugin --profile web exec kolmopdf -- config path
 
 # 清除已保存 Key
-kolmopdf config clear-key
+dsh plugin --profile web exec kolmopdf -- config clear-key
 
 # 使用自定义 settings 文件
-kolmopdf config set-key --file D:/path/to/settings.yaml
+dsh plugin --profile web exec kolmopdf -- config set-key --file D:/path/to/settings.yaml
 ```
 
 CLI 会尽量保留 YAML 注释；写入使用与 DSH 自身 settings 提供者相同的 `<file>.lock` 写锁与原子替换（`@deepseek-ai/dsh-atomic-write`），并把设置文件权限设为 owner-only（`0600`；Windows 上仍受 ACL 控制）。正在运行且启用了文件监听的 DSH 会热加载该修改。

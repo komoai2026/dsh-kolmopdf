@@ -30,7 +30,7 @@ describe("API key presentation", () => {
   it("provides settings and CLI remediation", () => {
     const message = missingApiKeyMessage();
     expect(message).toContain("Settings → KolmoPDF");
-    expect(message).toContain("kolmopdf config set-key");
+    expect(message).toContain("dsh plugin --profile web exec kolmopdf -- config set-key");
   });
 });
 

@@ -88,32 +88,32 @@ A missing key does not prevent the plugin from starting. The first authenticated
 
 ### Option 2: CLI
 
-After install:
+After install, run the CLI through DeepSeek Harness so it resolves from the profile (a bare `kolmopdf` is not on PATH):
 
 ```bash
-kolmopdf config set-key
+dsh plugin --profile web exec kolmopdf -- config set-key
 ```
 
 This reads the key with a masked prompt and writes `kolmopdf.apiKey` in `$DSH_HOME/settings.yaml` (default `~/.dsh/settings.yaml`).
 
 ```bash
 # Non-interactive (lands in shell history; not recommended)
-kolmopdf config set-key sk-xxxxxxxxxxxxxxxx
+dsh plugin --profile web exec kolmopdf -- config set-key sk-xxxxxxxxxxxxxxxx
 
 # Scripts / CI: read from stdin
-printf '%s' "$KOLMOPDF_API_KEY" | kolmopdf config set-key
+printf '%s' "$KOLMOPDF_API_KEY" | dsh plugin --profile web exec kolmopdf -- config set-key
 
 # Status (never prints the key)
-kolmopdf config status
+dsh plugin --profile web exec kolmopdf -- config status
 
 # Settings file path
-kolmopdf config path
+dsh plugin --profile web exec kolmopdf -- config path
 
 # Clear the stored key
-kolmopdf config clear-key
+dsh plugin --profile web exec kolmopdf -- config clear-key
 
 # Custom settings file
-kolmopdf config set-key --file D:/path/to/settings.yaml
+dsh plugin --profile web exec kolmopdf -- config set-key --file D:/path/to/settings.yaml
 ```
 
 The CLI preserves YAML comments, uses the same `<file>.lock` writer lock and atomic replace as DSH (`@deepseek-ai/dsh-atomic-write`), and sets owner-only permissions (`0600`; Windows still uses ACLs). A running DSH with file watch enabled hot-reloads the change.

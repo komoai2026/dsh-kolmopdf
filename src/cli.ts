@@ -95,7 +95,7 @@ async function readSecret(prompt: string): Promise<string> {
 }
 
 function help(): string {
-  return `kolmopdf ${VERSION}\n\nUsage:\n  kolmopdf config set-key [key] [--file <settings.yaml>]\n  kolmopdf config clear-key [--file <settings.yaml>]\n  kolmopdf config status [--file <settings.yaml>]\n  kolmopdf config path [--file <settings.yaml>]\n\nOmit [key] to enter it in a masked prompt. For scripts, pipe the key on stdin.\n`;
+  return `kolmopdf ${VERSION}\n\nUsage (via DeepSeek Harness):\n  dsh plugin --profile web exec kolmopdf -- config set-key [key] [--file <settings.yaml>]\n  dsh plugin --profile web exec kolmopdf -- config clear-key [--file <settings.yaml>]\n  dsh plugin --profile web exec kolmopdf -- config status [--file <settings.yaml>]\n  dsh plugin --profile web exec kolmopdf -- config path [--file <settings.yaml>]\n\nIf this binary is already on PATH, the same subcommands work as \`kolmopdf config …\`.\nOmit [key] to enter it in a masked prompt. For scripts, pipe the key on stdin.\n`;
 }
 
 async function main(argv = process.argv.slice(2)): Promise<void> {

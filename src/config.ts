@@ -76,7 +76,7 @@ export function missingApiKeyMessage(apiKeyEnv = DEFAULT_API_KEY_ENV): string {
   return [
     "KolmoPDF API key is not configured.",
     "Open DeepSeek Harness Settings → KolmoPDF and enter the key,",
-    "or run `kolmopdf config set-key` in a terminal.",
+    "or run `dsh plugin --profile web exec kolmopdf -- config set-key` in a terminal.",
     `You can also set the ${apiKeyEnv} environment variable.`,
     "Create a key at https://www.kolmopdf.com/api-keys (Plus/Pro account required).",
   ].join(" ");

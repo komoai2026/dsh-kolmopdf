@@ -10,7 +10,7 @@ export interface KolmoPdfErrorOptions {
 const SPECS: Record<string, { message: string; remediation: string; httpStatus: number | null }> = {
   invalid_api_key: {
     message: "API key is missing or invalid.",
-    remediation: "Configure it in Settings → KolmoPDF or run `kolmopdf config set-key`.",
+    remediation: "Configure it in Settings → KolmoPDF or run `dsh plugin --profile web exec kolmopdf -- config set-key`.",
     httpStatus: 401,
   },
   insufficient_points: {
