@@ -42,7 +42,7 @@ dsh plugin --profile web add github:komoai2026/dsh-kolmopdf
 dsh plugin --profile web add https://github.com/komoai2026/dsh-kolmopdf.git
 ```
 
-A Git install runs `prepare` and builds `lib/` (needs Node.js >= 20).
+This is a plain git dependency: the repo ships prebuilt `lib/` (same pattern as [dsh-ads](https://github.com/Nagi-ovo/dsh-ads)). There is no `prepare` script, so `dsh plugin add` does not trigger a pnpm build or `allowBuilds` prompt.
 
 Other install sources:
 

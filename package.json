@@ -50,7 +50,6 @@
     "test:host": "node scripts/host-mix-test.mjs",
     "test:client": "node scripts/client-loader-test.mjs",
     "check": "pnpm typecheck && pnpm test && pnpm build",
-    "prepare": "pnpm build",
     "prepublishOnly": "pnpm check"
   },
   "keywords": [
