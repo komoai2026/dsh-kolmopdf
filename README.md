@@ -1,0 +1,171 @@
+# kolmopdf
+
+KolmoPDF Tool 插件，为 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 提供高保真 PDF→Markdown 解析、保留版式的 PDF 翻译、Markdown 文档转换、费用预估和余额查询。
+
+## 功能
+
+| Tool | 功能 |
+| --- | --- |
+| `kolmopdf_parse_pdf` | PDF → Markdown，可选同步翻译，支持公式、表格、图片与 enrichment sidecar |
+| `kolmopdf_translate_pdf` | 保留原版式翻译 PDF，可输出纯译文或双栏对照 |
+| `kolmopdf_convert_markdown` | Markdown/ZIP → DOCX、HTML、PDF、LaTeX |
+| `kolmopdf_estimate_cost` | 本地读取页数并结合账户余额估算 credits |
+| `kolmopdf_check_balance` | 查询当前 credits 余额 |
+| `kolmopdf_get_task_status` | 按 task id 排查超时或卡住的任务 |
+
+- API Key 作为 `role("secret")` 设置保存，不会被设置 API 返回给浏览器。
+- Web GUI 的 **Settings → KolmoPDF** 是单独设置页，显示“已配置/未配置”状态并提供写入和清除操作。
+- Tool 调用时才检查 Key；没有配置时会提示打开设置页或使用 CLI。
+- 支持 `KOLMOPDF_API_KEY` 环境变量，设置页/CLI 中保存的 Key 优先。
+- 每次 HTTP 请求都接入 DSH Tool 的取消信号。
+
+## 要求
+
+- Node.js >= 20
+- DeepSeek Harness `0.1.0-rc.6` 兼容版本
+- KolmoPDF Plus 或 Pro 账户
+- 在 <https://www.kolmopdf.com/api-keys> 创建 API Key
+
+## 安装
+
+先把包安装到需要使用的 DSH profile（以 `web` 为例）：
+
+```bash
+# npm 包发布后
+dsh plugin --profile web add kolmopdf
+
+# 在本仓库直接进行本地测试（发布前）
+dsh plugin --profile web add D:/code/dsh-zhiyipdf
+```
+
+然后在该 profile 的 `cordis.patch.yml` 顶层补丁中加入 Host-plane 插件行：
+
+```yaml
+- insert:
+    - id: kolmopdf
+      name: kolmopdf
+```
+
+仓库内也提供 [`examples/cordis.patch.yml`](examples/cordis.patch.yml)。之所以挂在 Host plane，是因为 API Key 设置命名空间需要跨 session 共享；同一行注册的 Tools 通过 Host Tool registry 提供给 agent。
+
+重启 profile：
+
+```bash
+dsh web
+```
+
+> 仅执行 `dsh plugin ... add` 是安装 npm 依赖，不会自动修改 composition；必须再加入上面的插件行。
+
+## 配置 API Key
+
+### 方法一：Web 设置页（推荐）
+
+打开 DeepSeek Harness Web GUI：
+
+1. 点击左下角 **Settings / 设置**；
+2. 进入独立的 **KolmoPDF** 设置项；
+3. 输入 API Key 并保存。
+
+设置页把 Key 写入 DSH 的凭据库（`$DSH_HOME/.credentials.yaml` 的 `KOLMOPDF_API_KEY` 引用），不会经过设置文档 allowlist。若进程环境里已经有 `KOLMOPDF_API_KEY`，设置页会显示为只读（环境变量优先，不能覆盖）。
+
+如果尚未设置 Key，任何 KolmoPDF Tool 都会返回可操作提示，不会导致插件启动失败。
+
+### 方法二：CLI
+
+安装包后可以使用随包提供的命令：
+
+```bash
+kolmopdf config set-key
+```
+
+命令会用遮罩输入读取 Key，并写入 DSH 的 `$DSH_HOME/settings.yaml`（默认 `~/.dsh/settings.yaml`）中的 `kolmopdf.apiKey`。
+
+也支持以下命令：
+
+```bash
+# 非交互传参（会进入 shell history，不推荐）
+kolmopdf config set-key sk-xxxxxxxxxxxxxxxx
+
+# 脚本/CI：从 stdin 读取
+printf '%s' "$KOLMOPDF_API_KEY" | kolmopdf config set-key
+
+# 查看状态（不会输出 Key）
+kolmopdf config status
+
+# 查看实际设置文件路径
+kolmopdf config path
+
+# 清除已保存 Key
+kolmopdf config clear-key
+
+# 使用自定义 settings 文件
+kolmopdf config set-key --file D:/path/to/settings.yaml
+```
+
+CLI 会尽量保留 YAML 注释；写入使用与 DSH 自身 settings 提供者相同的 `<file>.lock` 写锁与原子替换（`@deepseek-ai/dsh-atomic-write`），避免与正在运行的其他进程并发写 `settings.yaml` 时互相覆盖，并把设置文件权限设为 owner-only（`0600`；Windows 上仍受 ACL 控制）。正在运行且启用了文件监听的 DSH 会热加载该修改。
+
+### 方法三：环境变量
+
+```bash
+export KOLMOPDF_API_KEY=sk-xxxxxxxxxxxxxxxx
+```
+
+PowerShell：
+
+```powershell
+$env:KOLMOPDF_API_KEY = 'sk-xxxxxxxxxxxxxxxx'
+dsh web
+```
+
+环境变量需要在启动 DSH 前设置。可在 composition 中把 `apiKeyEnv` 改成其他变量名。
+
+## 可选配置
+
+可直接在 composition 的插件行提供 base 配置；用户 settings 层仍会覆盖它：
+
+```yaml
+- insert:
+    - id: kolmopdf
+      name: kolmopdf
+      config:
+        outputDir: ./kolmopdf-output
+        pollIntervalMs: 2000
+        maxPollMinutes: 30
+        httpTimeoutMs: 60000
+        uploadTimeoutMs: 600000
+```
+
+| 字段 | 默认值 | 说明 |
+| --- | --- | --- |
+| `apiKey` | 未设置 | Secret；推荐由 GUI/CLI 写入 settings，不要提交到 composition |
+| `apiKeyEnv` | `KOLMOPDF_API_KEY` | 环境变量名称 |
+| `baseUrl` | `https://www.kolmopdf.com` | KolmoPDF 服务地址 |
+| `outputDir` | `./kolmopdf-output` | 结果输出目录（相对 DSH 启动目录） |
+| `pollIntervalMs` | `2000` | 轮询任务状态间隔 |
+| `maxPollMinutes` | `30` | 最长轮询分钟数 |
+| `httpTimeoutMs` | `60000` | 普通 HTTP 请求超时 |
+| `uploadTimeoutMs` | `600000` | 上传/下载超时 |
+
+## 开发
+
+```bash
+corepack enable pnpm
+pnpm install
+pnpm check
+```
+
+`pnpm check` 依次运行 TypeScript 类型检查、Vitest 测试和生产构建。
+
+## 安全说明
+
+- 不要把真实 API Key 写入仓库、README、截图或 issue。
+- Web 设置 API 只返回 secret 是否已配置，不返回 secret 内容。
+- CLI 状态命令只显示 configured/not configured。
+- 插件会读取 Tool 参数指定的本地 PDF/Markdown/ZIP，并把结果写入 `outputDir`；只在可信的 DSH composition 中启用它。
+- 输出目录先按 `realpath` 校验：`output_subdir` 及其中的符号链接都不能逃出 `outputDir`。
+- ZIP 下载使用路径穿越检查，拒绝绝对路径和 `../` 条目；解压上限为 10,000 个条目与 4 GiB 总解压大小，单次结果下载上限 2 GiB。
+- 输入文件上限 300 MB、最多 800 页（与 KolmoPDF 服务端限制一致），并在本地先校验后再上传；上传、轮询、下载与解压都会响应 DSH Tool 的取消信号。
+
+## License
+
+MIT

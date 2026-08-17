@@ -1,0 +1,7 @@
+# Add this row to the top-level `- insert:` list in your profile patch.
+# Host-plane mounting is intentional: the durable `kolmopdf` settings
+# namespace is shared across sessions, while the registered tools are visible
+# to agents through the host tool registry.
+- insert:
+    - id: kolmopdf
+      name: kolmopdf

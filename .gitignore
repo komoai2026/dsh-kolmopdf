@@ -1,0 +1,8 @@
+node_modules/
+lib/
+coverage/
+*.log
+.env
+kolmopdf-output/
+.pnpm-store/
+.tmp-cli-settings.yaml
