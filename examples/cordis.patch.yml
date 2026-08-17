@@ -1,7 +1,6 @@
-# Add this row to the top-level `- insert:` list in your profile patch.
-# Host-plane mounting is intentional: the durable `kolmopdf` settings
-# namespace is shared across sessions, while the registered tools are visible
-# to agents through the host tool registry.
+# Same insert as the package-root cordis.patch.yml. Prefer `dsh plugin add`
+# so the bundle layer is appended automatically. Use this file only if you
+# mount the plugin by hand in a profile patch.
 - insert:
     - id: kolmopdf
       name: kolmopdf

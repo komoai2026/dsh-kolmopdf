@@ -42,7 +42,7 @@ dsh plugin --profile web add github:komoai2026/dsh-kolmopdf
 dsh plugin --profile web add https://github.com/komoai2026/dsh-kolmopdf.git
 ```
 
-This is a plain git dependency: the repo ships prebuilt `lib/` (same pattern as [dsh-ads](https://github.com/Nagi-ovo/dsh-ads)). There is no `prepare` script, so `dsh plugin add` does not trigger a pnpm build or `allowBuilds` prompt.
+This is a git dependency that ships prebuilt `lib/` (no `prepare` script, so `dsh plugin add` does not hit pnpm `allowBuilds`). The package also declares `dsh.bundle`, so `dsh plugin add` appends `kolmopdf` to the profile's `dsh.profile.bundles` and the plugin mounts on the next start — settings page and tools appear without a hand-written composition row.
 
 Other install sources:
 
@@ -54,7 +54,7 @@ dsh plugin --profile web add kolmopdf
 dsh plugin --profile web add D:/code/dsh-zhiyipdf
 ```
 
-Then add a host-plane row to that profile's `cordis.patch.yml`:
+`dsh plugin add` already activates the bundle layer. Only add a host-plane row yourself if you installed the package some other way:
 
 ```yaml
 - insert:
@@ -62,7 +62,7 @@ Then add a host-plane row to that profile's `cordis.patch.yml`:
       name: kolmopdf
 ```
 
-See [`examples/cordis.patch.yml`](examples/cordis.patch.yml). The row lives on the host plane so the credential/settings namespace is shared across sessions. Tools register into the host tool registry.
+See [`examples/cordis.patch.yml`](examples/cordis.patch.yml) and the package-root [`cordis.patch.yml`](cordis.patch.yml).
 
 Restart the profile:
 
@@ -70,7 +70,7 @@ Restart the profile:
 dsh web
 ```
 
-> `dsh plugin ... add` only installs the npm/git dependency. You still need the composition row above.
+> `dsh plugin ... add` installs the dependency **and**, because this package declares `dsh.bundle`, joins the profile layer stack. A plain `pnpm add` without `dsh plugin` does not.
 
 ## Configure the API key
 

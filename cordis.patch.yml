@@ -1,0 +1,8 @@
+# Profile bundle patch for `dsh plugin add`. Applied as one insert layer after
+# the in-box bundles (dsh-base, dsh-web-app, …). Declaring `dsh.bundle.patch`
+# makes `dsh plugin add github:komoai2026/dsh-kolmopdf` join
+# `dsh.profile.bundles` automatically — without this, the package is only a
+# plain dependency and never mounts (settings page and tools stay invisible).
+- insert:
+    - id: kolmopdf
+      name: kolmopdf

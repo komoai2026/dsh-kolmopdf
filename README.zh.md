@@ -42,7 +42,7 @@ dsh plugin --profile web add github:komoai2026/dsh-kolmopdf
 dsh plugin --profile web add https://github.com/komoai2026/dsh-kolmopdf.git
 ```
 
-这是普通的 Git 依赖：仓库里直接带编好的 `lib/`（和 [dsh-ads](https://github.com/Nagi-ovo/dsh-ads) 一样）。没有 `prepare` 脚本，因此 `dsh plugin add` 不会触发 pnpm 构建，也不需要改 profile 的 `allowBuilds`。
+这是普通的 Git 依赖：仓库里带编好的 `lib/`，没有 `prepare`，因此不会触发 pnpm `allowBuilds`。同时声明了 `dsh.bundle`，所以 `dsh plugin add` 会把 `kolmopdf` 写进该 profile 的 `dsh.profile.bundles`，下次启动就会挂载——设置页和 Tool 会自动出现，不必手写 composition 行。
 
 也可以从 npm 或本地目录安装：
 
@@ -54,7 +54,7 @@ dsh plugin --profile web add kolmopdf
 dsh plugin --profile web add D:/code/dsh-zhiyipdf
 ```
 
-然后在该 profile 的 `cordis.patch.yml` 顶层补丁中加入 Host-plane 插件行：
+`dsh plugin add` 已经会激活 bundle 层。只有用别的方式装包时，才需要自己在 profile 的 `cordis.patch.yml` 里加一行：
 
 ```yaml
 - insert:
@@ -62,7 +62,7 @@ dsh plugin --profile web add D:/code/dsh-zhiyipdf
       name: kolmopdf
 ```
 
-仓库内也提供 [`examples/cordis.patch.yml`](examples/cordis.patch.yml)。之所以挂在 Host plane，是因为凭据/设置命名空间需要跨 session 共享；同一行注册的 Tools 通过 Host Tool registry 提供给 agent。
+参见 [`examples/cordis.patch.yml`](examples/cordis.patch.yml) 和仓库根目录的 [`cordis.patch.yml`](cordis.patch.yml)。
 
 重启 profile：
 
@@ -70,7 +70,7 @@ dsh plugin --profile web add D:/code/dsh-zhiyipdf
 dsh web
 ```
 
-> 仅执行 `dsh plugin ... add` 是安装依赖，不会自动修改 composition；必须再加入上面的插件行。
+> `dsh plugin ... add` 会安装依赖，并且因为本包声明了 `dsh.bundle`，会加入 profile 的 layer 栈。单独 `pnpm add`、不走 `dsh plugin` 则不会。
 
 ## 配置 API Key
 
