@@ -294,6 +294,7 @@ export function registerKolmoPdfTools(ctx: Context, source: () => Config): void 
                 ...(result.content_type == null ? {} : { content_type: result.content_type }),
                 ...(result.sha256 == null ? {} : { sha256: result.sha256 }),
                 ...(result.bytes == null ? {} : { bytes: result.bytes }),
+                ...(result.files == null ? {} : { files: result.files }),
               },
             }),
       };

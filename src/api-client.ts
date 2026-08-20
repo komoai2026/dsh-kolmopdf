@@ -30,6 +30,7 @@ export interface JobResultMeta {
   content_type?: string | null;
   sha256?: string | null;
   bytes?: number | null;
+  files?: Array<{ name: string; kind: string }> | null;
 }
 
 export interface StatusResult {
@@ -170,6 +171,9 @@ export class KolmoPdfClient {
               ...(typeof result.content_type === "string" ? { content_type: result.content_type } : {}),
               ...(typeof result.sha256 === "string" ? { sha256: result.sha256 } : {}),
               ...(typeof result.bytes === "number" ? { bytes: result.bytes } : {}),
+              ...(Array.isArray(result.files)
+                ? { files: result.files as Array<{ name: string; kind: string }> }
+                : {}),
             },
           }
         : {}),
