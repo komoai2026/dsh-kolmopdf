@@ -26,15 +26,56 @@ export async function readPageCount(data: Buffer): Promise<number> {
   return document.getPageCount();
 }
 
-export async function isZipFile(filePath: string): Promise<boolean> {
+export type SniffKind = "zip" | "pdf" | "markdown" | "docx" | "html" | "latex" | "binary";
+
+const KIND_EXT: Record<SniffKind, string> = {
+  zip: ".zip",
+  pdf: ".pdf",
+  markdown: ".md",
+  docx: ".docx",
+  html: ".html",
+  latex: ".tex",
+  binary: ".bin",
+};
+
+export function extensionForKind(kind: SniffKind): string {
+  return KIND_EXT[kind];
+}
+
+export function sniffBytes(buf: Uint8Array): SniffKind {
+  if (buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && [0x03, 0x05, 0x07].includes(buf[2] ?? -1)) {
+    const hay = Buffer.from(buf.subarray(0, Math.min(buf.length, 65536))).toString("latin1");
+    if (
+      hay.includes("word/document.xml") ||
+      hay.includes("wordprocessingml.document") ||
+      (hay.includes("[Content_Types].xml") && hay.toLowerCase().includes("word/"))
+    ) {
+      return "docx";
+    }
+    return "zip";
+  }
+  if (buf.length >= 4 && buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46) return "pdf";
+  const head = Buffer.from(buf.subarray(0, Math.min(buf.length, 800))).toString("utf8");
+  const trimmed = head.trimStart().toLowerCase();
+  if (trimmed.startsWith("<!doctype html") || trimmed.startsWith("<html")) return "html";
+  if (trimmed.startsWith("\\documentclass") || trimmed.startsWith("\\begin{document}")) return "latex";
+  if (head.trimStart().startsWith("#") || head.includes("\n# ") || head.includes("\n```")) return "markdown";
+  return "binary";
+}
+
+export async function sniffFile(filePath: string): Promise<SniffKind> {
   const handle = await open(filePath, "r");
   try {
-    const bytes = Buffer.alloc(4);
-    const { bytesRead } = await handle.read(bytes, 0, 4, 0);
-    return bytesRead >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b && [0x03, 0x05, 0x07].includes(bytes[2] ?? -1);
+    const bytes = Buffer.alloc(65536);
+    const { bytesRead } = await handle.read(bytes, 0, bytes.length, 0);
+    return sniffBytes(bytes.subarray(0, bytesRead));
   } finally {
     await handle.close();
   }
+}
+
+export async function isZipFile(filePath: string): Promise<boolean> {
+  return (await sniffFile(filePath)) === "zip";
 }
 
 function openArchive(path: string): Promise<ZipFile> {

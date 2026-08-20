@@ -7,7 +7,7 @@ import { KolmoPdfClient } from "./api-client.js";
 import type { Config, ResolvedConfig } from "./config.js";
 import { maskApiKey, missingApiKeyMessage, resolveConfig } from "./config.js";
 import { KolmoPdfError } from "./errors.js";
-import { extractZip, isZipFile, MAX_FILE_BYTES, MAX_PAGES, moveFile, readFileSize, readPageCount } from "./files.js";
+import { extractZip, extensionForKind, isZipFile, MAX_FILE_BYTES, MAX_PAGES, moveFile, readFileSize, readPageCount, sniffFile } from "./files.js";
 import { pollUntilComplete } from "./polling.js";
 
 const jsonOutput = {
@@ -162,14 +162,24 @@ export function registerKolmoPdfTools(ctx: Context, source: () => Config): void 
       }, exec.signal);
       await waitForTask(client, submission.task_id, config, exec);
       const root = await outputRoot(config, submission.task_id, input.output_subdir as string | undefined, exec.signal);
-      const destination = resolve(root, "translated.pdf");
-      await client.download(submission.task_id, destination, exec.signal);
+      const temporary = resolve(root, "download.bin");
+      await client.download(submission.task_id, temporary, exec.signal);
+      const kind = await sniffFile(temporary);
+      let translatedPath = resolve(root, `translated${extensionForKind(kind)}`);
+      await moveFile(temporary, translatedPath);
+      let archivePath: string | undefined;
+      if (kind === "zip") {
+        archivePath = translatedPath;
+        const extracted = await extractZip(archivePath, root, exec.signal);
+        const pdf = extracted.files.find((file) => file.toLowerCase().endsWith(".pdf"));
+        if (pdf) translatedPath = pdf;
+      }
       return {
         task_id: submission.task_id,
         pages_translated: pages,
         points_deducted: submission.points_deducted,
         remaining_points: submission.remaining_points,
-        output: { translated_pdf_path: destination },
+        output: { kind, translated_pdf_path: translatedPath, ...(archivePath === undefined ? {} : { archive_path: archivePath }) },
       };
     },
     presentCall: (args) => ({ card: "generic", title: `Translate ${basename(String((args as Record<string, unknown>).file_path ?? "PDF"))}`, kind: "read" }),
@@ -197,13 +207,16 @@ export function registerKolmoPdfTools(ctx: Context, source: () => Config): void 
       const submission = await client.convert(filePath, apiFormat, exec.signal);
       await waitForTask(client, submission.task_id, config, exec);
       const root = await outputRoot(config, submission.task_id, input.output_subdir as string | undefined, exec.signal);
-      const destination = resolve(root, `result.${outputFormat}`);
-      await client.download(submission.task_id, destination, exec.signal);
+      const temporary = resolve(root, "download.bin");
+      await client.download(submission.task_id, temporary, exec.signal);
+      const kind = await sniffFile(temporary);
+      const destination = resolve(root, `result${extensionForKind(kind)}`);
+      await moveFile(temporary, destination);
       return {
         task_id: submission.task_id,
         points_deducted: submission.points_deducted,
         remaining_points: submission.remaining_points,
-        output: { output_path: destination, target_format: outputFormat },
+        output: { output_path: destination, target_format: outputFormat, kind },
       };
     },
     presentCall: (args) => ({ card: "generic", title: `Convert ${basename(String((args as Record<string, unknown>).file_path ?? "Markdown"))}`, kind: "read" }),
@@ -263,13 +276,26 @@ export function registerKolmoPdfTools(ctx: Context, source: () => Config): void 
     async execute(args, exec) {
       const taskId = String((args as Record<string, unknown>).task_id);
       const status = await (await clientFrom(ctx, source)).getStatus(taskId, exec.signal);
+      const result = status.result;
       return {
         success: status.success,
         status: status.status,
         ...(status.message === undefined ? {} : { message: status.message }),
         ...(status.error_code === undefined ? {} : { error_code: status.error_code }),
         ...(status.queue_info === undefined ? {} : { queue_info: { position: status.queue_info.position, ahead_tasks: status.queue_info.ahead_tasks } }),
-        ...(status.result === undefined ? {} : { result: { task_id: status.result.task_id, download_url: status.result.download_url } }),
+        ...(result === undefined
+          ? {}
+          : {
+              result: {
+                task_id: result.task_id,
+                ...(result.download_url === undefined ? {} : { download_url: result.download_url }),
+                ...(result.filename == null ? {} : { filename: result.filename }),
+                ...(result.kind == null ? {} : { kind: result.kind }),
+                ...(result.content_type == null ? {} : { content_type: result.content_type }),
+                ...(result.sha256 == null ? {} : { sha256: result.sha256 }),
+                ...(result.bytes == null ? {} : { bytes: result.bytes }),
+              },
+            }),
       };
     },
     isConcurrencySafe: () => true,
