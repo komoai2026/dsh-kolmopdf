@@ -3,4 +3,4 @@
 # mount the plugin by hand in a profile patch.
 - insert:
     - id: kolmopdf
-      name: kolmopdf
+      name: '@kolmopdf/dsh-kolmopdf'

@@ -5,4 +5,4 @@
 # plain dependency and never mounts (settings page and tools stay invisible).
 - insert:
     - id: kolmopdf
-      name: kolmopdf
+      name: '@kolmopdf/dsh-kolmopdf'

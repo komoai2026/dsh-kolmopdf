@@ -1,6 +1,6 @@
-// Build the browser half as the dsh 0.1.1-rc.1 loader factory bundle.
+// Build the browser half as the dsh 0.1.1-rc.2 loader factory bundle.
 //
-// The 0.1.1-rc.1 client module system serves every `dsh.client` package's
+// The 0.1.1-rc.2 client module system serves every `dsh.client` package's
 // exports["./client"] as a classic script that registers itself:
 //
 //   window.__ModuleLoader__.load({ id, factory: (require) => { ... return module.exports; } });
@@ -48,10 +48,13 @@ await build({
   logLevel: "info",
   banner: {
     // The loader's factory environment has no Node globals; define the CJS
-    // harness exactly like the shipped 0.1.1-rc.1 bundles (dsh-client-ui-theme).
-    js: 'window.__ModuleLoader__.load({ id: "kolmopdf", factory: (require) => {\n"use strict";\nvar module = { exports: {} };\nvar exports = module.exports;\nObject.defineProperty(exports, Symbol.toStringTag, { value: "Module" });',
+    // harness exactly like the shipped 0.1.1-rc.2 bundles (dsh-client-ui-theme).
+    // The registration id must match the boot-graph row id, which is the
+    // package name.
+    js: 'window.__ModuleLoader__.load({ id: "@kolmopdf/dsh-kolmopdf", factory: (require) => {\n"use strict";\nvar module = { exports: {} };\nvar exports = module.exports;\nObject.defineProperty(exports, Symbol.toStringTag, { value: "Module" });',
   },
   footer: {
     js: "\nreturn module.exports;\n} });",
   },
 });
+

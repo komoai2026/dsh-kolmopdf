@@ -1,5 +1,13 @@
 packages:
   - .
 
+# pnpm 11 supply-chain policy (default 1440 min = 1 day). This plugin tracks
+# the fast-moving DeepSeek Harness prerelease line, whose packages are often
+# younger than the cooldown, so the first-party @deepseek-ai scope is excluded
+# while every other dependency keeps the maturity gate.
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - "@deepseek-ai/*"
+
 allowBuilds:
   esbuild: true

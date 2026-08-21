@@ -26,7 +26,7 @@ KolmoPDF Tool 插件，为 [DeepSeek Harness](https://github.com/deepseek-ai/dee
 ## 要求
 
 - Node.js >= 20
-- DeepSeek Harness `0.1.1-rc.1` 兼容版本（0.1.1-rc.1 client-modules 格式：`dsh.client` 清单 + `exports["./client"]` 惰性 CJS bundle）
+- DeepSeek Harness `0.1.1-rc.2` 兼容版本（0.1.1-rc.2 client-modules 格式：`dsh.client` 清单 + `exports["./client"]` 惰性 CJS bundle）
 - KolmoPDF Plus 或 Pro 账户
 - 在 <https://www.kolmopdf.com/api-keys> 创建 API Key
 
@@ -42,15 +42,15 @@ dsh plugin --profile web add github:komoai2026/dsh-kolmopdf
 dsh plugin --profile web add https://github.com/komoai2026/dsh-kolmopdf.git
 ```
 
-这是普通的 Git 依赖：仓库里带编好的 `lib/`，没有 `prepare`，因此不会触发 pnpm `allowBuilds`。同时声明了 `dsh.bundle`，所以 `dsh plugin add` 会把 `kolmopdf` 写进该 profile 的 `dsh.profile.bundles`，下次启动就会挂载——设置页和 Tool 会自动出现，不必手写 composition 行。
+这是普通的 Git 依赖：仓库里带编好的 `lib/`，没有 `prepare`，因此不会触发 pnpm `allowBuilds`。同时声明了 `dsh.bundle`，所以 `dsh plugin add` 会把 `@kolmopdf/dsh-kolmopdf` 写进该 profile 的 `dsh.profile.bundles`，下次启动就会挂载——设置页和 Tool 会自动出现，不必手写 composition 行。
 
 `@deepseek-ai/dsh-tools` 等宿主包是 **peer** 依赖（和 [dsh-ads](https://github.com/Nagi-ovo/dsh-ads) 一样），必须解析到当前 Harness 自带的那一份。如果插件再自带一份，任意 Tool 调用都会报 `Cannot read properties of undefined (reading 'prepare')`。
 
 也可以从 npm 或本地目录安装：
 
 ```bash
-# npm 包发布后
-dsh plugin --profile web add kolmopdf
+# 从 npm registry 安装
+dsh plugin --profile web add @kolmopdf/dsh-kolmopdf
 
 # 在本仓库直接进行本地测试
 dsh plugin --profile web add D:/code/dsh-zhiyipdf
@@ -61,7 +61,7 @@ dsh plugin --profile web add D:/code/dsh-zhiyipdf
 ```yaml
 - insert:
     - id: kolmopdf
-      name: kolmopdf
+      name: '@kolmopdf/dsh-kolmopdf'
 ```
 
 参见 [`examples/cordis.patch.yml`](examples/cordis.patch.yml) 和仓库根目录的 [`cordis.patch.yml`](cordis.patch.yml)。
@@ -70,12 +70,15 @@ dsh plugin --profile web add D:/code/dsh-zhiyipdf
 
 GitHub Actions 全自动完成发版与发布：
 
-- 推送与 `package.json` 版本一致的 tag（例如 `git tag v1.0.0 && git push origin v1.0.0`）——`Release & Publish` workflow 会先跑 `pnpm check`（发布时打包的是刚构建的 `lib/`），然后发布到 npmjs 并创建带自动生成说明的 GitHub Release。
+- **修改 `package.json` 的 `version` 并推送 `main`**——`Auto Tag on Version Bump` workflow 会与最新 `v*` tag 比对，在版本号变更提交上创建 `v<版本号>` tag，并调用 `Release & Publish` workflow（npm 发布 + 创建 GitHub Release）。
+- 也可以手动推送与版本一致的 tag：`git tag v1.0.0 && git push origin v1.0.0` 直接触发 `Release & Publish`——tag 必须与 `package.json` 版本完全一致，否则任务失败。
 - 预发布版本（版本号含 `-`）发布到 `next` dist-tag，正式版本发布到 `latest`。
+- `Release & Publish` 使用 **pnpm** 发布（`pnpm publish`），并采用 **npm Trusted Publishing（OpenID Connect）**：workflow 声明 `id-token: write`，npm 用 GitHub Actions 的 ID token 换取绑定到该 workflow 文件的短期发布令牌，provenance 证明自动生成（`--provenance`）——**无需 `NPM_TOKEN` secret**。
+- `pnpm publish` 会先跑 `pnpm check`（发布时打包的是刚构建的 `lib/`），然后发布到 npmjs 并创建带自动生成说明的 GitHub Release。
 - `Rebuild lib` workflow 会在每次推送到 `main` 时把提交的 `lib/` 与 `src/` 保持同步（Git 安装方式不执行 prepare 脚本）。
 - `CI` workflow 在每次 PR 与 main 推送时执行类型检查、测试与构建。
 
-配置：在仓库设置里添加 **`NPM_TOKEN`** secret（拥有 `kolmopdf` 发布权限的 npmjs access token）。已启用 provenance 证明，要求仓库为公开仓库。
+一次性配置：在 npmjs.com 打开 `@kolmopdf/dsh-kolmopdf` → Settings → Trusted publishing，授权本仓库的 GitHub Actions（`.github/workflows/release.yml`）（公开仓库；发布需持有 `@kolmopdf` scope 权限）。也可以用 `npm trust` CLI 创建该 publisher。配置完成后可以吊销包的自动化 token——workflow 不会再发送任何 token。
 
 重启 profile：
 
@@ -155,7 +158,7 @@ dsh web
 ```yaml
 - insert:
     - id: kolmopdf
-      name: kolmopdf
+      name: '@kolmopdf/dsh-kolmopdf'
       config:
         outputDir: ./kolmopdf-output
         pollIntervalMs: 2000
@@ -198,3 +201,4 @@ pnpm check
 ## License
 
 MIT
+
