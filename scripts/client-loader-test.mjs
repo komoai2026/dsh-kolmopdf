@@ -1,10 +1,10 @@
 // Execute the shipped client bundle exactly the way the browser loader does:
 // run the classic script (window.__ModuleLoader__.load registers the factory),
 // then materialize with a synchronous require. The bundle imports only react,
-// react/jsx-runtime, and @deepseek-ai/dsh-client-ui-primitives; the primitives
-// package ships as a built factory bundle in the browser table (its source
-// imports CSS, which only a real browser build handles), so we stub it here
-// and resolve react from the host install.
+// react/jsx-runtime, and @deepseek-ai/dsh-client-ui-primitives; since 0.1.1-rc.1
+// the primitives package ships inside the web frontend's static module table
+// (its source imports CSS, which only a real browser build handles), so we
+// stub it here and resolve react from the host install.
 import { createRequire } from "node:module";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";

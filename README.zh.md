@@ -18,7 +18,7 @@ KolmoPDF Tool 插件，为 [DeepSeek Harness](https://github.com/deepseek-ai/dee
 | `kolmopdf_get_task_status` | 按 task id 排查超时或卡住的任务 |
 
 - GUI 通过 DSH 凭据库保存 API Key（`KOLMOPDF_API_KEY`），不会出现在设置 describe 响应里。
-- Web GUI 的 **Settings → KolmoPDF** 是单独设置页，显示“已配置/未配置”并提供保存和清除。
+- Web GUI 的 **Settings → KolmoPDF** 是单独设置页，显示“已配置/未配置”并提供保存和清除，附带**实时积分**卡片与**任务总览**列表——积分与任务状态自动刷新（30 秒 / 10 秒），支持手动刷新与清除记录。任务历史保存在 `$DSH_HOME/kolmopdf/tasks.json`（最多 200 条）。
 - Tool 调用时才检查 Key；没有配置时会提示打开设置页或使用 CLI。
 - 也支持进程环境变量 `KOLMOPDF_API_KEY`。环境变量优先，存在时设置页为只读。
 - 上传、轮询、下载与 ZIP 解压都会响应 Tool 取消信号。
@@ -26,7 +26,7 @@ KolmoPDF Tool 插件，为 [DeepSeek Harness](https://github.com/deepseek-ai/dee
 ## 要求
 
 - Node.js >= 20
-- DeepSeek Harness `0.1.0-rc.6` 兼容版本
+- DeepSeek Harness `0.1.1-rc.1` 兼容版本（0.1.1-rc.1 client-modules 格式：`dsh.client` 清单 + `exports["./client"]` 惰性 CJS bundle）
 - KolmoPDF Plus 或 Pro 账户
 - 在 <https://www.kolmopdf.com/api-keys> 创建 API Key
 

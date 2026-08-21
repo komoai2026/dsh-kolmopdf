@@ -18,7 +18,7 @@ Repository: <https://github.com/komoai2026/dsh-kolmopdf>
 | `kolmopdf_get_task_status` | Inspect a task by id |
 
 - The GUI stores the API key through DSH credentials (`KOLMOPDF_API_KEY`). The value never rides settings describe responses.
-- **Settings → KolmoPDF** is a dedicated settings page (configured / missing, save, clear).
+- **Settings → KolmoPDF** is a dedicated settings page (configured / missing, save, clear) with a **live credits** card and a **task overview** list — balance and task statuses refresh automatically (30 s / 10 s) and manually, with a clear-log action. Task history lives in `$DSH_HOME/kolmopdf/tasks.json` (newest 200).
 - Tools check the key lazily. A missing key tells the user to open Settings or run the CLI.
 - `KOLMOPDF_API_KEY` in the process environment is also accepted. An env key shadows the GUI credential and makes the settings page read-only.
 - HTTP upload, poll, download, and ZIP extract honor the tool abort signal.
@@ -26,7 +26,7 @@ Repository: <https://github.com/komoai2026/dsh-kolmopdf>
 ## Requirements
 
 - Node.js >= 20
-- DeepSeek Harness `0.1.0-rc.6` compatible
+- DeepSeek Harness `0.1.1-rc.1` compatible (0.1.1-rc.1 client-modules format: `dsh.client` manifest + `exports["./client"]` lazy-CJS bundle)
 - KolmoPDF Plus or Pro account
 - An API key from <https://www.kolmopdf.com/api-keys>
 

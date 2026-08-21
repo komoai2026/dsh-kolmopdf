@@ -1,7 +1,7 @@
-// Build the browser half as the rc.6 loader factory bundle.
+// Build the browser half as the dsh 0.1.1-rc.1 loader factory bundle.
 //
-// rc.6 serves every `dsh.client` package's exports["./client"] as a classic
-// script that registers itself:
+// The 0.1.1-rc.1 client module system serves every `dsh.client` package's
+// exports["./client"] as a classic script that registers itself:
 //
 //   window.__ModuleLoader__.load({ id, factory: (require) => { ... return module.exports; } });
 //
@@ -48,7 +48,7 @@ await build({
   logLevel: "info",
   banner: {
     // The loader's factory environment has no Node globals; define the CJS
-    // harness exactly like the shipped rc.6 bundles (dsh-client-ui-theme).
+    // harness exactly like the shipped 0.1.1-rc.1 bundles (dsh-client-ui-theme).
     js: 'window.__ModuleLoader__.load({ id: "kolmopdf", factory: (require) => {\n"use strict";\nvar module = { exports: {} };\nvar exports = module.exports;\nObject.defineProperty(exports, Symbol.toStringTag, { value: "Module" });',
   },
   footer: {

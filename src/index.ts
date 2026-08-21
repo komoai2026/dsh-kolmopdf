@@ -1,6 +1,7 @@
 import type { Context } from "@deepseek-ai/cordis";
 import { installSettingsSection, settingsNamespace } from "@deepseek-ai/dsh-settings";
 import { Config, SETTINGS_NAMESPACE, type Config as PluginConfig } from "./config.js";
+import { registerKolmoPdfHostApi } from "./host-api.js";
 import { registerKolmoPdfTools } from "./tools.js";
 
 export const name = "kolmopdf";
@@ -22,6 +23,7 @@ export function apply(ctx: Context, config: PluginConfig): void {
   });
 
   registerKolmoPdfTools(ctx, () => current());
+  registerKolmoPdfHostApi(ctx, () => current());
 }
 
 export { Config, SETTINGS_NAMESPACE } from "./config.js";

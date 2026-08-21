@@ -3,11 +3,12 @@ import { basename, extname, isAbsolute, relative, resolve, sep } from "node:path
 import type { Context } from "@deepseek-ai/cordis";
 import { credentialRef } from "@deepseek-ai/dsh-credentials";
 import { defineTool, type ToolRunContext } from "@deepseek-ai/dsh-tools";
-import { KolmoPdfClient } from "./api-client.js";
+import { KolmoPdfClient, type SubmitResult } from "./api-client.js";
 import type { Config, ResolvedConfig } from "./config.js";
 import { maskApiKey, missingApiKeyMessage, resolveConfig } from "./config.js";
 import { KolmoPdfError } from "./errors.js";
 import { extractZip, isZipFile, MAX_FILE_BYTES, MAX_PAGES, moveFile, readFileSize, readPageCount } from "./files.js";
+import { ledgerPath, recordTask, updateTaskStatus, type TaskOperation } from "./ledger.js";
 import { pollUntilComplete } from "./polling.js";
 
 const jsonOutput = {
@@ -23,14 +24,14 @@ function currentConfig(source: () => Config): ResolvedConfig {
  * Resolve the API key at call time: explicit settings key (CLI) first, then
  * the credential reference (GUI writes / managed store / launch environment).
  */
-async function resolveApiKey(ctx: Context, config: ResolvedConfig): Promise<string> {
+export async function resolveApiKey(ctx: Context, config: ResolvedConfig): Promise<string> {
   if (config.apiKey !== undefined) return config.apiKey;
   const credentials = ctx.get("credentials") as { resolve(ref: ReturnType<typeof credentialRef>): Promise<{ value: string } | undefined> } | undefined;
   const resolved = credentials === undefined ? undefined : await credentials.resolve(credentialRef(config.apiKeyEnv));
   return resolved?.value ?? "";
 }
 
-async function clientFrom(ctx: Context, source: () => Config): Promise<KolmoPdfClient> {
+export async function clientFrom(ctx: Context, source: () => Config): Promise<KolmoPdfClient> {
   const config = resolveConfig(source());
   const apiKey = await resolveApiKey(ctx, config);
   if (apiKey.length === 0) throw new KolmoPdfError("invalid_api_key", { message: missingApiKeyMessage(config.apiKeyEnv), remediation: "" });
@@ -74,6 +75,40 @@ async function waitForTask(client: KolmoPdfClient, taskId: string, config: Resol
   });
 }
 
+/** Record a submission in the settings-overview ledger. */
+async function recordSubmission(operation: TaskOperation, filePath: string, submission: SubmitResult): Promise<void> {
+  await recordTask(ledgerPath(), {
+    task_id: submission.task_id,
+    operation,
+    file: filePath,
+    created_at: Date.now(),
+    updated_at: Date.now(),
+    status: submission.status,
+    ...(submission.points_deducted > 0 ? { points: submission.points_deducted } : {}),
+  });
+}
+
+/** Ledger writes are best-effort: a failure must never fail a tool call. */
+async function bestEffortLedger(work: () => Promise<void>): Promise<void> {
+  try {
+    await work();
+  } catch (error) {
+    console.warn(`[kolmopdf] task ledger update failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/** Track one submitted task through the settings-overview ledger: record, await, write the final status. */
+async function trackTask(operation: TaskOperation, filePath: string, submission: SubmitResult, wait: () => Promise<void>): Promise<void> {
+  await bestEffortLedger(() => recordSubmission(operation, filePath, submission));
+  try {
+    await wait();
+    await bestEffortLedger(() => updateTaskStatus(ledgerPath(), submission.task_id, { status: "succeeded", updated_at: Date.now() }));
+  } catch (error) {
+    await bestEffortLedger(() => updateTaskStatus(ledgerPath(), submission.task_id, { status: "failed", error: error instanceof Error ? error.message : String(error), updated_at: Date.now() }));
+    throw error;
+  }
+}
+
 export function registerKolmoPdfTools(ctx: Context, source: () => Config): void {
   ctx.tools.register(defineTool({
     name: "kolmopdf_parse_pdf",
@@ -100,7 +135,7 @@ export function registerKolmoPdfTools(ctx: Context, source: () => Config): void 
       const data = await readFile(filePath);
       const pages = await validatePdf(data, filePath, "parse_file_too_large", "parse_page_limit_exceeded");
       const submission = await client.parse(filePath, input, exec.signal);
-      await waitForTask(client, submission.task_id, config, exec);
+      await trackTask("parse", filePath, submission, () => waitForTask(client, submission.task_id, config, exec));
       const root = await outputRoot(config, submission.task_id, input.output_subdir as string | undefined, exec.signal);
       const temporary = resolve(root, "download.bin");
       await client.download(submission.task_id, temporary, exec.signal);
@@ -160,7 +195,7 @@ export function registerKolmoPdfTools(ctx: Context, source: () => Config): void 
         enable_image_translation: input.enable_image_translation ?? false,
         enable_table_translation: input.enable_table_translation ?? false,
       }, exec.signal);
-      await waitForTask(client, submission.task_id, config, exec);
+      await trackTask("translate", filePath, submission, () => waitForTask(client, submission.task_id, config, exec));
       const root = await outputRoot(config, submission.task_id, input.output_subdir as string | undefined, exec.signal);
       const destination = resolve(root, "translated.pdf");
       await client.download(submission.task_id, destination, exec.signal);
@@ -195,7 +230,7 @@ export function registerKolmoPdfTools(ctx: Context, source: () => Config): void 
       const apiFormat = requested === "docx" ? "word" : requested === "tex" ? "latex" : requested;
       const outputFormat = apiFormat === "word" ? "docx" : apiFormat === "latex" ? "tex" : apiFormat;
       const submission = await client.convert(filePath, apiFormat, exec.signal);
-      await waitForTask(client, submission.task_id, config, exec);
+      await trackTask("convert", filePath, submission, () => waitForTask(client, submission.task_id, config, exec));
       const root = await outputRoot(config, submission.task_id, input.output_subdir as string | undefined, exec.signal);
       const destination = resolve(root, `result.${outputFormat}`);
       await client.download(submission.task_id, destination, exec.signal);
