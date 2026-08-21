@@ -22,13 +22,24 @@ export interface SubmitResult {
   queue_info?: { position: number; ahead_tasks: number };
 }
 
+export interface JobResultMeta {
+  task_id: string;
+  download_url?: string;
+  filename?: string | null;
+  kind?: string | null;
+  content_type?: string | null;
+  sha256?: string | null;
+  bytes?: number | null;
+  files?: Array<{ name: string; kind: string }> | null;
+}
+
 export interface StatusResult {
   success: boolean;
   status: string;
   message?: string;
   error_code?: string;
   queue_info?: { position: number; ahead_tasks: number };
-  result?: { task_id: string; download_url: string };
+  result?: JobResultMeta;
 }
 
 export interface BalanceResult {
@@ -150,8 +161,35 @@ export class KolmoPdfClient {
       ...(typeof body.message === "string" ? { message: body.message } : typeof error?.message === "string" ? { message: error.message } : {}),
       ...(typeof error?.code === "string" ? { error_code: error.code } : {}),
       ...(typeof queue?.ahead === "number" ? { queue_info: { position: Number(queue.position ?? 0), ahead_tasks: queue.ahead } } : {}),
-      ...(typeof result?.download_url === "string" ? { result: { task_id: taskId, download_url: result.download_url } } : {}),
+      ...(result
+        ? {
+            result: {
+              task_id: taskId,
+              ...(typeof result.download_url === "string" ? { download_url: result.download_url } : {}),
+              ...(typeof result.filename === "string" ? { filename: result.filename } : {}),
+              ...(typeof result.kind === "string" ? { kind: result.kind } : {}),
+              ...(typeof result.content_type === "string" ? { content_type: result.content_type } : {}),
+              ...(typeof result.sha256 === "string" ? { sha256: result.sha256 } : {}),
+              ...(typeof result.bytes === "number" ? { bytes: result.bytes } : {}),
+              ...(Array.isArray(result.files)
+                ? { files: result.files as Array<{ name: string; kind: string }> }
+                : {}),
+            },
+          }
+        : {}),
     };
+  }
+
+  async openEvents(taskId: string, signal?: AbortSignal): Promise<Response> {
+    const response = await fetch(`${this.options.baseUrl}/api/v1/jobs/${encodeURIComponent(taskId)}/events`, {
+      method: "GET",
+      headers: { ...this.headers(), Accept: "text/event-stream" },
+      ...(signal === undefined ? {} : { signal }),
+    });
+    if (!response.ok) {
+      throw new KolmoPdfError("api_task_error", { message: `SSE failed with HTTP ${response.status}.`, httpStatus: response.status });
+    }
+    return response;
   }
 
   async download(taskId: string, destination: string, signal?: AbortSignal): Promise<{ contentType: string | null; bytesWritten: number }> {
