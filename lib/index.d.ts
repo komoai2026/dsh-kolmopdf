@@ -41,6 +41,19 @@ interface SubmitResult {
         ahead_tasks: number;
     };
 }
+interface JobResultMeta {
+    task_id: string;
+    download_url?: string;
+    filename?: string | null;
+    kind?: string | null;
+    content_type?: string | null;
+    sha256?: string | null;
+    bytes?: number | null;
+    files?: Array<{
+        name: string;
+        kind: string;
+    }> | null;
+}
 interface StatusResult {
     success: boolean;
     status: string;
@@ -50,10 +63,7 @@ interface StatusResult {
         position: number;
         ahead_tasks: number;
     };
-    result?: {
-        task_id: string;
-        download_url: string;
-    };
+    result?: JobResultMeta;
 }
 interface BalanceResult {
     success: boolean;
@@ -71,6 +81,7 @@ declare class KolmoPdfClient {
     translate(filePath: string, options: Record<string, unknown>, signal?: AbortSignal): Promise<SubmitResult>;
     convert(filePath: string, targetFormat: string, signal?: AbortSignal): Promise<SubmitResult>;
     getStatus(taskId: string, signal?: AbortSignal): Promise<StatusResult>;
+    openEvents(taskId: string, signal?: AbortSignal): Promise<Response>;
     download(taskId: string, destination: string, signal?: AbortSignal): Promise<{
         contentType: string | null;
         bytesWritten: number;
