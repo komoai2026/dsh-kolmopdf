@@ -66,12 +66,12 @@ dsh plugin --profile web add D:/code/dsh-zhiyipdf
 
 ## Publishing
 
-GitHub Actions handle releases end to end:
+One `Release & Publish` workflow (`.github/workflows/release.yml`) handles the pipeline end to end:
 
-- **Change `version` in `package.json` and push to `main`** — the `Auto Tag on Version Bump` workflow compares it with the latest `v*` tag, creates `v<version>` on the bump commit, and calls the `Release & Publish` workflow (npm publish + GitHub Release).
-- Manually pushing a matching tag works too: `git tag v1.0.0 && git push origin v1.0.0` triggers `Release & Publish` directly. The tag must equal `package.json` version exactly, or the job fails.
+- **Change `version` in `package.json` and push to `main`** — the workflow compares it with the latest `v*` tag, creates `v<version>` on the bump commit and pushes it, then publishes in the same run. The tag push uses the internal token, which does not re-trigger the push event, so the same run continues straight into publishing. A push that does not change the version is a green no-op.
+- Manually pushing a matching tag works too: `git tag v1.0.0 && git push origin v1.0.0` releases exactly that tag. The tag must equal `package.json` version exactly, or the job fails.
 - Prerelease versions (`-` in the version) publish under the `next` dist-tag, stable versions under `latest`.
-- `Release & Publish` publishes with **pnpm** (`pnpm publish`) using **npm trusted publishing** (OpenID Connect): the workflow holds `id-token: write`, npm exchanges the GitHub Actions ID token for a short-lived token bound to this workflow file, and provenance attestations are generated automatically (`--provenance`). **No `NPM_TOKEN` secret is used.**
+- Publishing uses **pnpm** (`pnpm publish`) with **npm trusted publishing** (OpenID Connect): the workflow holds `id-token: write`, npm exchanges the GitHub Actions ID token for a short-lived token bound to this workflow file, and provenance attestations are generated automatically (`--provenance`). **No `NPM_TOKEN` secret is used.**
 - `pnpm publish` runs `pnpm check` first (each publish packs a freshly built `lib/`), then a GitHub Release is created with generated notes.
 - The `Rebuild lib` workflow keeps the committed `lib/` in sync with `src/` on every push to `main` (git installs never run prepare scripts).
 - `CI` workflow typechecks, tests, and builds on every PR and push to main.

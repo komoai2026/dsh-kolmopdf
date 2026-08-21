@@ -68,12 +68,12 @@ dsh plugin --profile web add D:/code/dsh-zhiyipdf
 
 ## 发版
 
-GitHub Actions 全自动完成发版与发布：
+一个 `Release & Publish` workflow（`.github/workflows/release.yml`）全自动完成发版与发布：
 
-- **修改 `package.json` 的 `version` 并推送 `main`**——`Auto Tag on Version Bump` workflow 会与最新 `v*` tag 比对，在版本号变更提交上创建 `v<版本号>` tag，并调用 `Release & Publish` workflow（npm 发布 + 创建 GitHub Release）。
-- 也可以手动推送与版本一致的 tag：`git tag v1.0.0 && git push origin v1.0.0` 直接触发 `Release & Publish`——tag 必须与 `package.json` 版本完全一致，否则任务失败。
+- **修改 `package.json` 的 `version` 并推送 `main`**——workflow 会与最新 `v*` tag 比对，在版本号变更提交上创建并推送 `v<版本号>` tag，然后在同一次运行中完成发布。tag 推送用的是工作流内部 token，不会重新触发 push 事件，所以本次运行直接继续发布。版本号未变化的推送为绿色空操作。
+- 也可以手动推送与版本一致的 tag：`git tag v1.0.0 && git push origin v1.0.0` 直接触发发布——tag 必须与 `package.json` 版本完全一致，否则任务失败。
 - 预发布版本（版本号含 `-`）发布到 `next` dist-tag，正式版本发布到 `latest`。
-- `Release & Publish` 使用 **pnpm** 发布（`pnpm publish`），并采用 **npm Trusted Publishing（OpenID Connect）**：workflow 声明 `id-token: write`，npm 用 GitHub Actions 的 ID token 换取绑定到该 workflow 文件的短期发布令牌，provenance 证明自动生成（`--provenance`）——**无需 `NPM_TOKEN` secret**。
+- 发布使用 **pnpm**（`pnpm publish`），并采用 **npm Trusted Publishing（OpenID Connect）**：workflow 声明 `id-token: write`，npm 用 GitHub Actions 的 ID token 换取绑定到该 workflow 文件的短期发布令牌，provenance 证明自动生成（`--provenance`）——**无需 `NPM_TOKEN` secret**。
 - `pnpm publish` 会先跑 `pnpm check`（发布时打包的是刚构建的 `lib/`），然后发布到 npmjs 并创建带自动生成说明的 GitHub Release。
 - `Rebuild lib` workflow 会在每次推送到 `main` 时把提交的 `lib/` 与 `src/` 保持同步（Git 安装方式不执行 prepare 脚本）。
 - `CI` workflow 在每次 PR 与 main 推送时执行类型检查、测试与构建。
