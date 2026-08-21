@@ -8,7 +8,7 @@ import { Document, parseDocument } from "yaml";
 import { SETTINGS_NAMESPACE } from "./constants.js";
 import { validateApiKey } from "./config.js";
 
-const VERSION = "0.1.1-rc.1";
+const VERSION = "1.0.0";
 
 function settingsPath(args: string[]): string {
   const index = args.indexOf("--file");

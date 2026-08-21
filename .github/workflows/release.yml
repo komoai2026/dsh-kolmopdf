@@ -1,0 +1,78 @@
+name: Release & Publish
+
+# Publish a new npm release (and matching GitHub Release) when a version tag
+# is pushed. The tag must match the package.json version exactly:
+#
+#   git tag v0.1.1-rc.1 && git push origin v0.1.1-rc.1
+#
+# Prerelease versions (containing "-") publish under the `next` dist-tag;
+# stable versions publish under `latest`. `prepublishOnly` (pnpm check:
+# typecheck + tests + build) runs before the publish, and the built `lib/`
+# is packed from the CI working tree, so the tarball always ships fresh
+# artifacts even when the tag's committed lib is stale.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # GitHub Release creation
+  id-token: write # npm provenance attestation
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Verify the tag matches package.json
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $VERSION"
+            exit 1
+          fi
+
+      - name: Compute the npm dist-tag
+        id: dist-tag
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          if [[ "$VERSION" == *-* ]]; then
+            echo "tag=next" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # npm publish runs the prepublishOnly lifecycle, which is `pnpm check`
+        # (typecheck + vitest + production build). lib/ is rebuilt there and
+        # packed into the tarball.
+        run: |
+          npm publish --access public --tag "${{ steps.dist-tag.outputs.tag }}" --provenance
+
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag

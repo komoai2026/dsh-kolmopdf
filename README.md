@@ -64,6 +64,17 @@ dsh plugin --profile web add D:/code/dsh-zhiyipdf
       name: kolmopdf
 ```
 
+## Publishing
+
+GitHub Actions handle releases end to end:
+
+- Push a version tag matching `package.json` (e.g. `git tag v1.0.0 && git push origin v1.0.0`) — the `Release & Publish` workflow runs `pnpm check` (each publish packs a freshly built `lib/`), publishes to npmjs, and creates a GitHub Release with generated notes.
+- Prerelease versions (`-` in the version) publish under the `next` dist-tag, stable versions under `latest`.
+- The `Rebuild lib` workflow keeps the committed `lib/` in sync with `src/` on every push to `main` (git installs never run prepare scripts).
+- `CI` workflow typechecks, tests, and builds on every PR and push to main.
+
+Setup: add an **`NPM_TOKEN`** repository secret (an npmjs access token with publish permission for `kolmopdf`). Provenance attestation is enabled; it requires the repository to be public.
+
 See [`examples/cordis.patch.yml`](examples/cordis.patch.yml) and the package-root [`cordis.patch.yml`](cordis.patch.yml).
 
 Restart the profile:

@@ -1,6 +1,6 @@
 {
   "name": "kolmopdf",
-  "version": "0.1.1-rc.1",
+  "version": "1.0.0",
   "description": "KolmoPDF tools for DeepSeek Harness with durable API-key settings and CLI configuration.",
   "type": "module",
   "main": "./lib/index.js",
@@ -18,7 +18,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "kolmopdf": "./lib/cli.js"
+    "kolmopdf": "lib/cli.js"
   },
   "files": [
     "lib",
@@ -55,6 +55,7 @@
     "check": "pnpm typecheck && pnpm test && pnpm build",
     "prepublishOnly": "pnpm check"
   },
+  "packageManager": "pnpm@11.20.0",
   "keywords": [
     "deepseek-harness",
     "dsh",

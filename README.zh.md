@@ -66,6 +66,17 @@ dsh plugin --profile web add D:/code/dsh-zhiyipdf
 
 参见 [`examples/cordis.patch.yml`](examples/cordis.patch.yml) 和仓库根目录的 [`cordis.patch.yml`](cordis.patch.yml)。
 
+## 发版
+
+GitHub Actions 全自动完成发版与发布：
+
+- 推送与 `package.json` 版本一致的 tag（例如 `git tag v1.0.0 && git push origin v1.0.0`）——`Release & Publish` workflow 会先跑 `pnpm check`（发布时打包的是刚构建的 `lib/`），然后发布到 npmjs 并创建带自动生成说明的 GitHub Release。
+- 预发布版本（版本号含 `-`）发布到 `next` dist-tag，正式版本发布到 `latest`。
+- `Rebuild lib` workflow 会在每次推送到 `main` 时把提交的 `lib/` 与 `src/` 保持同步（Git 安装方式不执行 prepare 脚本）。
+- `CI` workflow 在每次 PR 与 main 推送时执行类型检查、测试与构建。
+
+配置：在仓库设置里添加 **`NPM_TOKEN`** secret（拥有 `kolmopdf` 发布权限的 npmjs access token）。已启用 provenance 证明，要求仓库为公开仓库。
+
 重启 profile：
 
 ```bash

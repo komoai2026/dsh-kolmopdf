@@ -1,0 +1,51 @@
+name: Rebuild lib
+
+# This package ships prebuilt lib/ (git installs through `dsh plugin add
+# github:...` never run prepare scripts), so keep the committed artifacts in
+# sync with src/ on main. Version tags created from main then carry a fresh
+# lib/. Commits made with GITHUB_TOKEN do not re-trigger workflows, so this
+# settles after one pass.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rebuild-lib-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck, test, and build
+        run: pnpm check
+
+      - name: Commit rebuilt lib if it changed
+        run: |
+          if git diff --quiet -- lib; then
+            echo "lib is up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib
+          git commit -m "chore(build): rebuild lib"
+          git push origin "$(git branch --show-current)"
