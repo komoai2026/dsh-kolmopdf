@@ -1,6 +1,6 @@
 {
   "name": "@kolmopdf/dsh-kolmopdf",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "KolmoPDF tools for DeepSeek Harness with durable API-key settings and CLI configuration.",
   "type": "module",
   "main": "./lib/index.js",
