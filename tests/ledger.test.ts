@@ -91,9 +91,10 @@ describe("ledger", () => {
 
   it("places the ledger under $DSH_HOME/kolmopdf", () => {
     const previous = process.env.DSH_HOME;
+    const home = join(tmpdir(), "dsh-home-test");
     try {
-      process.env.DSH_HOME = "C:/tmp/home";
-      expect(ledgerPath()).toBe(join("C:/tmp/home", "kolmopdf", "tasks.json"));
+      process.env.DSH_HOME = home;
+      expect(ledgerPath()).toBe(join(home, "kolmopdf", "tasks.json"));
     } finally {
       if (previous === undefined) delete process.env.DSH_HOME;
       else process.env.DSH_HOME = previous;
