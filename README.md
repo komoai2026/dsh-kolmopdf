@@ -44,7 +44,7 @@ dsh plugin --profile web add https://github.com/komoai2026/dsh-kolmopdf.git
 
 This is a git dependency that ships prebuilt `lib/` (no `prepare` script, so `dsh plugin add` does not hit pnpm `allowBuilds`). The package also declares `dsh.bundle`, so `dsh plugin add` appends `@kolmopdf/dsh-kolmopdf` to the profile's `dsh.profile.bundles` and the plugin mounts on the next start — settings page and tools appear without a hand-written composition row.
 
-Host packages such as `@deepseek-ai/dsh-tools` are **peer** dependencies (same pattern as [dsh-ads](https://github.com/Nagi-ovo/dsh-ads)). They must resolve to the running Harness copy. Shipping a second copy inside this plugin makes every tool call fail with `Cannot read properties of undefined (reading 'prepare')`.
+Host packages such as `@deepseek-ai/dsh-tools` are **optional peer** dependencies (same pattern as [dsh-ads](https://github.com/Nagi-ovo/dsh-ads)): they must resolve to the running Harness copy, and pnpm treats them as optional so a profile install does not warn about them. Shipping a second copy inside this plugin makes every tool call fail with `Cannot read properties of undefined (reading 'prepare')`.
 
 Other install sources:
 

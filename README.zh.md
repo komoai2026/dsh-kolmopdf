@@ -44,7 +44,7 @@ dsh plugin --profile web add https://github.com/komoai2026/dsh-kolmopdf.git
 
 这是普通的 Git 依赖：仓库里带编好的 `lib/`，没有 `prepare`，因此不会触发 pnpm `allowBuilds`。同时声明了 `dsh.bundle`，所以 `dsh plugin add` 会把 `@kolmopdf/dsh-kolmopdf` 写进该 profile 的 `dsh.profile.bundles`，下次启动就会挂载——设置页和 Tool 会自动出现，不必手写 composition 行。
 
-`@deepseek-ai/dsh-tools` 等宿主包是 **peer** 依赖（和 [dsh-ads](https://github.com/Nagi-ovo/dsh-ads) 一样），必须解析到当前 Harness 自带的那一份。如果插件再自带一份，任意 Tool 调用都会报 `Cannot read properties of undefined (reading 'prepare')`。
+`@deepseek-ai/dsh-tools` 等宿主包是 **可选 peer** 依赖（和 [dsh-ads](https://github.com/Nagi-ovo/dsh-ads) 一样），必须解析到当前 Harness 自带的那一份；pnpm 将其视为 optional，profile 安装时不会告警。如果插件再自带一份，任意 Tool 调用都会报 `Cannot read properties of undefined (reading 'prepare')`。
 
 也可以从 npm 或本地目录安装：
 
