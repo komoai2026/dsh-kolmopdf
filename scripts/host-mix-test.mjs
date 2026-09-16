@@ -1,14 +1,17 @@
 // Reproduce the real profile composition WITHOUT touching the live profile:
-// host dsh dependencies (nvm install) + the workspace plugin (separate copies
-// of cordis / schemastery / dsh-tools / dsh-settings, exactly like the
-// profiles\web\node_modules\kolmopdf symlink resolves).
-import { createRequire } from "node:module";
+// host DSH dependencies + the workspace plugin as separate module copies.
+// Set DSH_ROOT to the installed @deepseek-ai/dsh package directory.
 import { mkdtemp, rm } from "node:fs/promises";
+import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { tmpdir } from "node:os";
 
-const dshRoot = "C:/Users/dacon/AppData/Local/nvm/v25.2.1/node_modules/@deepseek-ai/dsh";
+const dshRoot = process.env.DSH_ROOT;
+if (!dshRoot) {
+  throw new Error("Set DSH_ROOT to the installed @deepseek-ai/dsh package directory.");
+}
+
 const hostRequire = createRequire(join(dshRoot, "package.json"));
 const hostImport = (id) => import(pathToFileURL(hostRequire.resolve(id)).href);
 
@@ -20,10 +23,10 @@ const [cordis, SystemPrompt, ToolRuntime, SettingsFile] = await Promise.all([
 ]);
 const { Context } = cordis;
 
-const temp = await mkdtemp(join(tmpdir(), "komolpdf-host-mix-"));
+const temp = await mkdtemp(join(tmpdir(), "kolmopdf-host-mix-"));
 const settingsPath = join(temp, "settings.yaml");
 try {
-  const plugin = await import("file:///D:/code/dsh-zhiyipdf/lib/index.js");
+  const plugin = await import(new URL("../lib/index.js", import.meta.url).href);
   const ctx = new Context();
   // Credential seam: GUI settings page writes through this reference. Verify
   // tools resolve the key from it (instead of failing with the missing-key

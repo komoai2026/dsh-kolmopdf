@@ -53,7 +53,7 @@ Other install sources:
 dsh plugin --profile web add @kolmopdf/dsh-kolmopdf
 
 # Local checkout
-dsh plugin --profile web add D:/code/dsh-zhiyipdf
+dsh plugin --profile web add D:/code/dsh-kolmopdf
 ```
 
 `dsh plugin add` already activates the bundle layer. Only add a host-plane row yourself if you installed the package some other way:
@@ -187,6 +187,12 @@ pnpm check
 ```
 
 `pnpm check` runs TypeScript, Vitest, and the production build.
+
+The optional host-composition test needs the installed Harness package directory:
+
+```bash
+DSH_ROOT=/path/to/node_modules/@deepseek-ai/dsh pnpm test:host
+```
 
 ## Security
 

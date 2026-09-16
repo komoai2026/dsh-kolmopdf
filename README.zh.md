@@ -53,7 +53,7 @@ dsh plugin --profile web add https://github.com/komoai2026/dsh-kolmopdf.git
 dsh plugin --profile web add @kolmopdf/dsh-kolmopdf
 
 # 在本仓库直接进行本地测试
-dsh plugin --profile web add D:/code/dsh-zhiyipdf
+dsh plugin --profile web add D:/code/dsh-kolmopdf
 ```
 
 `dsh plugin add` 已经会激活 bundle 层。只有用别的方式装包时，才需要自己在 profile 的 `cordis.patch.yml` 里加一行：
@@ -187,6 +187,12 @@ pnpm check
 ```
 
 `pnpm check` 依次运行 TypeScript 类型检查、Vitest 测试和生产构建。
+
+可选的宿主组合测试需要指定已安装的 Harness 包目录：
+
+```bash
+DSH_ROOT=/path/to/node_modules/@deepseek-ai/dsh pnpm test:host
+```
 
 ## 安全说明
 
