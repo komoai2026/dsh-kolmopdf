@@ -284,7 +284,7 @@ export function registerKolmoPdfTools(ctx: Context, source: () => Config): void 
         current_balance: balance.points,
         sufficient: shortfall === 0,
         shortfall,
-        recommendation: shortfall === 0 ? "Sufficient" : `Top up at https://www.kolmopdf.com/subscription (short by ${shortfall} credits).`,
+        recommendation: shortfall === 0 ? "Sufficient" : `Top up at https://www.kolmopdf.com/credits (short by ${shortfall} credits).`,
       };
     },
     isConcurrencySafe: () => true,

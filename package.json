@@ -1,7 +1,9 @@
 {
   "name": "@kolmopdf/dsh-kolmopdf",
-  "version": "1.0.4",
-  "description": "KolmoPDF tools for DeepSeek Harness with durable API-key settings and CLI configuration.",
+  "version": "1.1.0",
+  "description": "Official KolmoPDF plugin for DeepSeek Harness: high-fidelity PDF to Markdown/OCR (formulas & tables), layout-preserving PDF translation, and Markdown export to DOCX, PDF, HTML, and LaTeX.",
+  "author": "KolmoPDF <support@kolmopdf.com>",
+  "icon": "./assets/icon.png",
   "type": "module",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -14,6 +16,8 @@
       "types": "./lib/client.d.ts",
       "default": "./lib/client.js"
     },
+    "./icon": "./assets/icon.png",
+    "./locale/*.json": "./locale/*.json",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
@@ -22,6 +26,8 @@
   },
   "files": [
     "lib",
+    "assets",
+    "locale",
     "README.md",
     "README.zh.md",
     "CHANGELOG.md",
@@ -30,16 +36,15 @@
     "cordis.patch.yml"
   ],
   "dsh": {
+    "manifestVersion": 1,
     "bundle": {
       "patch": "./cordis.patch.yml"
     },
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-settings",
-        "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-api-remotes",
-        "@deepseek-ai/dsh-client-connection"
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings"
       ],
       "platform": "web"
     }
@@ -56,19 +61,31 @@
     "check": "pnpm typecheck && pnpm test && pnpm build",
     "prepublishOnly": "pnpm check"
   },
-  "packageManager": "pnpm@11.20.0",
+  "packageManager": "pnpm@11.1.3",
   "keywords": [
     "deepseek-harness",
     "dsh",
+    "dsh-plugin",
     "cordis",
+    "cordis-plugin",
+    "kolmopdf",
     "pdf",
+    "pdf-to-markdown",
+    "pdf-parser",
+    "ocr",
+    "pdf-translation",
+    "bilingual-pdf",
     "markdown",
-    "translation",
-    "kolmopdf"
+    "latex",
+    "docx",
+    "formula",
+    "table-extraction",
+    "document-processing"
   ],
   "license": "MIT",
   "engines": {
-    "node": ">=20"
+    "node": ">=20",
+    "dsh": ">=0.2.0-rc.1 <0.3.0"
   },
   "dependencies": {
     "pdf-lib": "^1.17.1",
@@ -76,29 +93,29 @@
     "yauzl": "^3.2.0"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.1",
-    "@deepseek-ai/dsh-api-remotes": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-atomic-write": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-connection": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-locale": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-runtime": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-settings": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-credentials": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-home-paths": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-settings": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-system-prompt": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-tools": "^0.1.1-rc.2",
-    "@deepseek-ai/schemastery": "^3.18.1",
-    "react": "^18.2.0"
+    "@deepseek-ai/cordis": "^4.1.0",
+    "@deepseek-ai/dsh-api-remotes": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-atomic-write": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-client-locale": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-client-ui-primitives": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-client-ui-settings": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-client-ui-slots": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-credentials": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-home-paths": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-settings": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-system-prompt": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-tools": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/schemastery": "^3.19.0",
+    "react": "^18.2.0 || ^19.0.0"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/cordis": { "optional": true },
     "@deepseek-ai/dsh-api-remotes": { "optional": true },
     "@deepseek-ai/dsh-atomic-write": { "optional": true },
-    "@deepseek-ai/dsh-client-connection": { "optional": true },
     "@deepseek-ai/dsh-client-locale": { "optional": true },
-    "@deepseek-ai/dsh-client-runtime": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-primitives": { "optional": true },
     "@deepseek-ai/dsh-client-ui-settings": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-slots": { "optional": true },
     "@deepseek-ai/dsh-credentials": { "optional": true },
     "@deepseek-ai/dsh-home-paths": { "optional": true },
     "@deepseek-ai/dsh-settings": { "optional": true },
@@ -108,21 +125,20 @@
     "react": { "optional": true }
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "^4.0.1",
-    "@deepseek-ai/dsh-api-remotes": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-atomic-write": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-connection": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-locale": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-runtime": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-primitives": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-settings": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-slots": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-credentials": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-home-paths": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-settings": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-system-prompt": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-tools": "0.1.1-rc.2",
-    "@deepseek-ai/schemastery": "^3.18.1",
+    "@deepseek-ai/cordis": "4.1.0",
+    "@deepseek-ai/dsh-api-remotes": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-atomic-write": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-locale": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-primitives": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-renderer": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-settings": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-client-ui-slots": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-credentials": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-home-paths": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-settings": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-system-prompt": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-tools": "0.2.2-rc.1",
+    "@deepseek-ai/schemastery": "3.19.0",
     "@types/node": "^22.15.0",
     "@types/react": "~18.3.1",
     "@types/yauzl": "^2.10.3",
@@ -136,7 +152,7 @@
     "type": "git",
     "url": "git+https://github.com/komoai2026/dsh-kolmopdf.git"
   },
-  "homepage": "https://github.com/komoai2026/dsh-kolmopdf#readme",
+  "homepage": "https://www.kolmopdf.com",
   "bugs": {
     "url": "https://github.com/komoai2026/dsh-kolmopdf/issues"
   },

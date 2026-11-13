@@ -1,24 +1,23 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { resolve } from "node:path";
 import { stdin, stdout } from "node:process";
 import { resolveDshHome } from "@deepseek-ai/dsh-home-paths";
 import { withFileLock, writeFileAtomic } from "@deepseek-ai/dsh-atomic-write";
 import { Document, parseDocument } from "yaml";
-import { SETTINGS_NAMESPACE } from "./constants.js";
-import { validateApiKey } from "./config.js";
+import { CREDENTIAL_REF, validateApiKey } from "./constants.js";
 
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 
-function settingsPath(args: string[]): string {
+function credentialsPath(args: string[]): string {
   const index = args.indexOf("--file");
   if (index >= 0) {
     const value = args[index + 1];
-    if (value === undefined || value.startsWith("-")) throw new Error("--file requires a YAML settings path");
+    if (value === undefined || value.startsWith("-")) throw new Error("--file requires a YAML credentials path");
     args.splice(index, 2);
     return resolve(value);
   }
-  return resolve(resolveDshHome(), "settings.yaml");
+  return resolve(resolveDshHome(), ".credentials.yaml");
 }
 
 async function loadDocument(path: string): Promise<Document.Parsed> {
@@ -28,8 +27,8 @@ async function loadDocument(path: string): Promise<Document.Parsed> {
   const document = parseDocument(text, { prettyErrors: true });
   if (document.errors.length > 0) throw new Error(`Cannot update ${path}: ${document.errors.map((error) => error.message).join("; ")}`);
   const root = document.toJS();
-  if (root !== null && (typeof root !== "object" || Array.isArray(root))) throw new Error(`Cannot update ${path}: the settings document root must be a map`);
-  if (document.contents === null) document.contents = document.createNode({}) as Document.Parsed["contents"];
+  if (root !== null && (typeof root !== "object" || Array.isArray(root))) throw new Error(`Cannot update ${path}: the credentials document root must be a map`);
+  if (document.contents === null) document.contents = document.createNode({ version: 1, refs: {} }) as Document.Parsed["contents"];
   return document;
 }
 
@@ -37,10 +36,11 @@ async function saveDocument(path: string, document: Document.Parsed): Promise<vo
   await writeFileAtomic(path, document.toString(), { mode: 0o600, dirMode: 0o700 });
 }
 
-/** Serialize one read-modify-write cycle with DSH's own settings writer lock. */
+/** Serialize one read-modify-write cycle with DSH's own credential writer lock. */
 async function updateDocument(path: string, mutate: (document: Document.Parsed) => void): Promise<void> {
   await withFileLock(path, async () => {
     const document = await loadDocument(path);
+    if (document.get("version") === undefined) document.set("version", 1);
     mutate(document);
     await saveDocument(path, document);
   });
@@ -95,21 +95,21 @@ async function readSecret(prompt: string): Promise<string> {
 }
 
 function help(): string {
-  return `kolmopdf ${VERSION}\n\nUsage (via DeepSeek Harness):\n  dsh plugin --profile web exec kolmopdf -- config set-key [key] [--file <settings.yaml>]\n  dsh plugin --profile web exec kolmopdf -- config clear-key [--file <settings.yaml>]\n  dsh plugin --profile web exec kolmopdf -- config status [--file <settings.yaml>]\n  dsh plugin --profile web exec kolmopdf -- config path [--file <settings.yaml>]\n\nIf this binary is already on PATH, the same subcommands work as \`kolmopdf config …\`.\nOmit [key] to enter it in a masked prompt. For scripts, pipe the key on stdin.\n`;
+  return `kolmopdf ${VERSION}\n\nUsage (via DeepSeek Harness):\n  dsh plugin --profile web exec kolmopdf -- config set-key [key] [--file <.credentials.yaml>]\n  dsh plugin --profile web exec kolmopdf -- config clear-key [--file <.credentials.yaml>]\n  dsh plugin --profile web exec kolmopdf -- config status [--file <.credentials.yaml>]\n  dsh plugin --profile web exec kolmopdf -- config path [--file <.credentials.yaml>]\n\nIf this binary is already on PATH, the same subcommands work as \`kolmopdf config …\`.\nOmit [key] to enter it in a masked prompt. For scripts, pipe the key on stdin.\n`;
 }
 
 async function main(argv = process.argv.slice(2)): Promise<void> {
   if (argv.includes("--help") || argv.includes("-h") || argv.length === 0) { stdout.write(help()); return; }
   if (argv.includes("--version") || argv.includes("-v")) { stdout.write(`${VERSION}\n`); return; }
   const args = [...argv];
-  const path = settingsPath(args);
+  const path = credentialsPath(args);
   if (args[0] !== "config") throw new Error(`Unknown command: ${args.join(" ")}\n\n${help()}`);
   const command = args[1];
   if (command === "path") { stdout.write(`${path}\n`); return; }
   if (command === "status") {
     const document = await loadDocument(path);
-    const value = document.getIn([SETTINGS_NAMESPACE, "apiKey"]);
-    stdout.write(value === undefined || String(value).trim().length === 0 ? `API key: not configured\nSettings: ${path}\n` : `API key: configured\nSettings: ${path}\n`);
+    const value = document.getIn(["refs", CREDENTIAL_REF]);
+    stdout.write(value === undefined || String(value).trim().length === 0 ? `API key: not configured\nCredentials: ${path}\n` : `API key: configured\nCredentials: ${path}\n`);
     return;
   }
   if (command === "set-key") {
@@ -117,14 +117,14 @@ async function main(argv = process.argv.slice(2)): Promise<void> {
     const invalid = validateApiKey(key);
     if (invalid !== undefined) throw new Error(invalid);
     await updateDocument(path, (document) => {
-      document.setIn([SETTINGS_NAMESPACE, "apiKey"], key);
+      document.setIn(["refs", CREDENTIAL_REF], key);
     });
     stdout.write(`KolmoPDF API key saved to ${path}\n`);
     return;
   }
   if (command === "clear-key") {
     await updateDocument(path, (document) => {
-      document.deleteIn([SETTINGS_NAMESPACE, "apiKey"]);
+      document.deleteIn(["refs", CREDENTIAL_REF]);
     });
     stdout.write(`KolmoPDF API key removed from ${path}\n`);
     return;

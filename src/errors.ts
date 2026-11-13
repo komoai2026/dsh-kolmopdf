@@ -15,7 +15,7 @@ const SPECS: Record<string, { message: string; remediation: string; httpStatus: 
   },
   insufficient_points: {
     message: "Not enough KolmoPDF credits.",
-    remediation: "Top up at https://www.kolmopdf.com/subscription.",
+    remediation: "Top up at https://www.kolmopdf.com/credits.",
     httpStatus: 402,
   },
   parse_file_too_large: { message: "PDF exceeds 300 MB.", remediation: "Split the PDF locally.", httpStatus: 400 },

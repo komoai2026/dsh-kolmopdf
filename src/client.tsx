@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import type { ClientContext } from "@deepseek-ai/dsh-client-runtime/client";
+import type { Context as ClientContext } from "@deepseek-ai/cordis";
 import { Button, Input, StateDot } from "@deepseek-ai/dsh-client-ui-primitives";
-import type { ClientRemote, IApiClient } from "@deepseek-ai/dsh-api-remotes/client";
-import type { ConnectionHandle } from "@deepseek-ai/dsh-client-connection/client";
+import type { ClientRemote } from "@deepseek-ai/dsh-api-remotes/client";
 import type { LocaleRuntime } from "@deepseek-ai/dsh-client-locale/client";
+import type {} from "@deepseek-ai/dsh-client-ui-renderer/client";
 import type { SettingsSectionOwnerProps } from "@deepseek-ai/dsh-client-ui-settings/client";
 import { CREDENTIAL_REF, validateApiKey } from "./constants.js";
 
@@ -27,7 +27,7 @@ const zh = {
   empty: "请输入 API Key。",
   readOnly: "当前 Key 由环境变量提供，设置页无法修改。",
   cli: "也可通过 CLI 配置：dsh plugin --profile web exec kolmopdf -- config set-key",
-  account: "可在 https://www.kolmopdf.com/api-keys 创建 API Key（需要 Plus/Pro 账户）。",
+  account: "可在 https://www.kolmopdf.com/api-keys 创建 API Key（支持 Free / PAYG / Go / Plus / Pro 账户）。",
   failed: "设置操作失败",
   balanceTitle: "实时积分",
   balanceLoaded: "积分余额",
@@ -73,7 +73,7 @@ const en: typeof zh = {
   empty: "Enter an API key.",
   readOnly: "The key is provided by the environment; it cannot be changed here.",
   cli: "You can also configure it from a terminal: dsh plugin --profile web exec kolmopdf -- config set-key",
-  account: "Create a key at https://www.kolmopdf.com/api-keys (Plus/Pro account required).",
+  account: "Create a key at https://www.kolmopdf.com/api-keys (Free / PAYG / Go / Plus / Pro accounts supported).",
   failed: "Settings operation failed",
   balanceTitle: "Live credits",
   balanceLoaded: "Credit balance",
@@ -140,7 +140,6 @@ interface TasksView {
 }
 
 interface Injected {
-  api: IApiClient;
   remote: ClientRemote;
   t: Translate;
 }
@@ -148,7 +147,8 @@ interface Injected {
 type Props = SettingsSectionOwnerProps & Injected;
 
 async function getJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { cache: "no-store", credentials: "same-origin" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return (await response.json()) as T;
 }
 
@@ -203,7 +203,7 @@ function OverviewCard({ title, children, actions }: { title: string; children: R
   );
 }
 
-export function KolmoPdfSettingsSection({ api, remote, t }: Props) {
+export function KolmoPdfSettingsSection({ remote, t }: Props) {
   const [state, setState] = useState<State>({ status: "loading", configured: false, writable: false });
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -218,15 +218,15 @@ export function KolmoPdfSettingsSection({ api, remote, t }: Props) {
       return { ...rest, status: "loading" };
     });
     try {
-      const response = await api.credentials.describe({ refs: [CREDENTIAL_REF] });
-      if (!response.result.ok) throw new Error(response.result.error.message);
-      const view = response.result.value.credentials[CREDENTIAL_REF];
+      const response = await remote.credentials.describe([CREDENTIAL_REF]);
+      if (!response.ok) throw new Error(response.error.message);
+      const view = response.value[CREDENTIAL_REF];
       if (view === undefined) throw new Error("The KolmoPDF credential reference is unavailable.");
       setState({ status: "ready", configured: view.configured, writable: view.writable });
     } catch (error) {
       setState({ status: "error", configured: false, writable: false, message: error instanceof Error ? error.message : String(error) });
     }
-  }, [api.credentials]);
+  }, [remote]);
 
   const refreshBalance = useCallback(async () => {
     setBalanceBusy(true);
@@ -253,7 +253,8 @@ export function KolmoPdfSettingsSection({ api, remote, t }: Props) {
   const clearTasks = useCallback(async () => {
     setTasksBusy(true);
     try {
-      const response = await fetch("/plugins/kolmopdf/tasks", { method: "DELETE", cache: "no-store" });
+      const response = await fetch("/plugins/kolmopdf/tasks", { method: "DELETE", cache: "no-store", credentials: "same-origin" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const body = (await response.json()) as { ok?: boolean; error?: string };
       if (body.ok !== true) throw new Error(body.error ?? "clear failed");
       setTasks({ ok: true, configured: true, tasks: [] });
@@ -279,8 +280,8 @@ export function KolmoPdfSettingsSection({ api, remote, t }: Props) {
     }
     setBusy(true);
     try {
-      const response = await api.credentials.set({ ref: CREDENTIAL_REF, value: key });
-      if (!response.result.ok) throw new Error(response.result.error.message);
+      const response = await remote.credentials.set(CREDENTIAL_REF, key);
+      if (!response.ok) throw new Error(response.error.message);
       setDraft("");
       setState({ status: "ready", configured: true, writable: state.writable, message: t("saved") });
       void refreshBalance();
@@ -295,8 +296,8 @@ export function KolmoPdfSettingsSection({ api, remote, t }: Props) {
   const clear = async () => {
     setBusy(true);
     try {
-      const response = await api.credentials.unset({ ref: CREDENTIAL_REF });
-      if (!response.result.ok) throw new Error(response.result.error.message);
+      const response = await remote.credentials.unset(CREDENTIAL_REF);
+      if (!response.ok) throw new Error(response.error.message);
       setDraft("");
       setState({ status: "ready", configured: false, writable: state.writable, message: t("cleared") });
       void refreshBalance();
@@ -440,13 +441,13 @@ export function KolmoPdfSettingsSection({ api, remote, t }: Props) {
   );
 }
 
-export const inject = ["slots", "locale", "connection", "remote"];
+export const inject = ["slots", "locale", "remote"];
 
 export function apply(ctx: ClientContext): void {
   const locale = ctx.get("locale") as LocaleRuntime;
-  const connection = ctx.get("connection") as ConnectionHandle;
   const remote = ctx.get("remote") as ClientRemote;
-  const slots = ctx.get("slots") as ClientContext["slots"];
+  const slots = ctx.slots;
+  if (slots === undefined) return;
   ctx.effect(() => {
     const disposeZh = locale.register(LOCALE_NAMESPACE, "zh", zh);
     const disposeEn = locale.register(LOCALE_NAMESPACE, "en", en);
@@ -458,6 +459,6 @@ export function apply(ctx: ClientContext): void {
     id: "kolmopdf",
     order: 35,
     label: () => t("nav"),
-    inject: () => ({ api: connection.api, remote, t }),
+    inject: () => ({ remote, t }),
   }, KolmoPdfSettingsSection));
 }

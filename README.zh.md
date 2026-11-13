@@ -1,143 +1,103 @@
-# kolmopdf
+# KolmoPDF for DeepSeek Harness（`@kolmopdf/dsh-kolmopdf`）
+
+<p align="left">
+  <img src="assets/icon.png" width="64" height="64" alt="KolmoPDF 图标" />
+</p>
 
 [English](README.md) | 中文
 
-KolmoPDF Tool 插件，为 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 提供高保真 PDF→Markdown 解析、保留版式的 PDF 翻译、Markdown 文档转换、费用预估和余额查询。
+[![npm](https://img.shields.io/npm/v/@kolmopdf/dsh-kolmopdf)](https://www.npmjs.com/package/@kolmopdf/dsh-kolmopdf)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-仓库：<https://github.com/komoai2026/dsh-kolmopdf>
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh`）官方 **KolmoPDF** 插件：提供高保真 **PDF → Markdown / OCR**（保留数学公式、表格、多栏排版与图片）、**保留原版式的 PDF 翻译**（纯译文或双栏对照 PDF）、**Markdown 导出为 Word (DOCX)、PDF、HTML 和 LaTeX**、费用预估及余额查询。
 
-## 功能
+- 官网：<https://www.kolmopdf.com>
+- 创建 API Key：<https://www.kolmopdf.com/api-keys>
+- 仓库：<https://github.com/komoai2026/dsh-kolmopdf>
 
-| Tool | 功能 |
+## 功能列表
+
+| Tool | 能力 |
 | --- | --- |
-| `kolmopdf_parse_pdf` | PDF → Markdown，可选同步翻译，支持公式、表格、图片与 enrichment sidecar |
-| `kolmopdf_translate_pdf` | 保留原版式翻译 PDF，可输出纯译文或双栏对照 |
-| `kolmopdf_convert_markdown` | Markdown/ZIP → DOCX、HTML、PDF、LaTeX |
-| `kolmopdf_estimate_cost` | 本地读取页数并结合账户余额估算 credits（不扣费） |
-| `kolmopdf_check_balance` | 查询当前 credits 余额 |
-| `kolmopdf_get_task_status` | 按 task id 排查超时或卡住的任务 |
+| `kolmopdf_parse_pdf` | PDF → Markdown / OCR（保留公式、表格、分栏与图片），支持边解析边翻译及 `outline`/`summary` 侧边增强 |
+| `kolmopdf_translate_pdf` | 保留原版式 PDF 翻译（纯译文或双栏对照 PDF，可选图片/表格内文字翻译） |
+| `kolmopdf_convert_markdown` | 将 `.md` / `.markdown` / `.zip`（含图片）转换为 DOCX、HTML、PDF 或 LaTeX |
+| `kolmopdf_estimate_cost` | 本地统计页数并结合账户余额估算 credits（不扣费） |
+| `kolmopdf_check_balance` | 查询当前 API Key 对应的积分余额 |
+| `kolmopdf_get_task_status` | 根据 `task_id` 查询任务状态与结果元数据 |
 
-- GUI 通过 DSH 凭据库保存 API Key（`KOLMOPDF_API_KEY`），不会出现在设置 describe 响应里。
-- Web GUI 的 **Settings → KolmoPDF** 是单独设置页，显示“已配置/未配置”并提供保存和清除，附带**实时积分**卡片与**任务总览**列表——积分与任务状态自动刷新（30 秒 / 10 秒），支持手动刷新与清除记录。任务历史保存在 `$DSH_HOME/kolmopdf/tasks.json`（最多 200 条）。
-- Tool 调用时才检查 Key；没有配置时会提示打开设置页或使用 CLI。
-- 也支持进程环境变量 `KOLMOPDF_API_KEY`。环境变量优先，存在时设置页为只读。
-- 上传、轮询、下载与 ZIP 解压都会响应 Tool 取消信号。
+### 内置 Web GUI 集成
 
-## 要求
+- 独立 **Settings → KolmoPDF** 设置页：安全保存/清除 API Key（写入 `$DSH_HOME/.credentials.yaml` 的 `KOLMOPDF_API_KEY`，不会明文出现在设置 describe 响应中）。
+- **实时积分**卡片与**任务总览**列表（每 30 秒 / 10 秒自动刷新，支持手动刷新与清除记录；任务历史保存在 `$DSH_HOME/kolmopdf/tasks.json`，最多保留最近 200 条）。
+- 惰性鉴权检查：未配置 Key 不会阻碍插件启动，调用 Tool 时给出明确配置指引。
+- 支持通过进程环境变量 `KOLMOPDF_API_KEY` 覆盖。
+- 文件上传、状态轮询、结果下载与 ZIP 解压均完整响应 Tool 取消信号。
+
+## 环境要求
 
 - Node.js >= 20
-- DeepSeek Harness `0.1.1-rc.2` 兼容版本（0.1.1-rc.2 client-modules 格式：`dsh.client` 清单 + `exports["./client"]` 惰性 CJS bundle）
-- KolmoPDF Plus 或 Pro 账户
-- 在 <https://www.kolmopdf.com/api-keys> 创建 API Key
+- DeepSeek Harness `>=0.2.0-rc.1 <0.3.0`（支持 `dsh.bundle` 与 `dsh.client`）
+- 在 <https://www.kolmopdf.com/api-keys> 创建 API Key（支持 Free / PAYG / Go / Plus / Pro 全类型账户；Web、API 与 DSH 共用账户积分）
 
 ## 安装
 
-先把包安装到需要使用的 DSH profile（以 `web` 为例）。推荐直接从 GitHub 安装：
+### 方式一：npm / CLI 安装（推荐）
 
 ```bash
-# 从 GitHub 仓库安装（推荐，无需等 npm 发布）
-dsh plugin --profile web add github:komoai2026/dsh-kolmopdf
-
-# 等价写法
-dsh plugin --profile web add https://github.com/komoai2026/dsh-kolmopdf.git
-```
-
-这是普通的 Git 依赖：仓库里带编好的 `lib/`，没有 `prepare`，因此不会触发 pnpm `allowBuilds`。同时声明了 `dsh.bundle`，所以 `dsh plugin add` 会把 `@kolmopdf/dsh-kolmopdf` 写进该 profile 的 `dsh.profile.bundles`，下次启动就会挂载——设置页和 Tool 会自动出现，不必手写 composition 行。
-
-`@deepseek-ai/dsh-tools` 等宿主包是 **可选 peer** 依赖（和 [dsh-ads](https://github.com/Nagi-ovo/dsh-ads) 一样），必须解析到当前 Harness 自带的那一份；pnpm 将其视为 optional，profile 安装时不会告警。如果插件再自带一份，任意 Tool 调用都会报 `Cannot read properties of undefined (reading 'prepare')`。
-
-也可以从 npm 或本地目录安装：
-
-```bash
-# 从 npm registry 安装
 dsh plugin --profile web add @kolmopdf/dsh-kolmopdf
-
-# 在本仓库直接进行本地测试
-dsh plugin --profile web add D:/code/dsh-kolmopdf
 ```
 
-`dsh plugin add` 已经会激活 bundle 层。只有用别的方式装包时，才需要自己在 profile 的 `cordis.patch.yml` 里加一行：
+重启 profile（`dsh web`）或等待 HMR 热重载即可生效。
 
-```yaml
-- insert:
-    - id: kolmopdf
-      name: '@kolmopdf/dsh-kolmopdf'
-```
+### 方式二：桌面端 / 插件市场一键安装
 
-参见 [`examples/cordis.patch.yml`](examples/cordis.patch.yml) 和仓库根目录的 [`cordis.patch.yml`](cordis.patch.yml)。
+- **DSH Desktop / dsh-market**：在插件市场搜索 `kolmopdf` 或 `@kolmopdf/dsh-kolmopdf` 一键安装。
+- **DSH 原生 Discover（`0.2.1+`）**：在实验插件中开启 **自定义插件索引（Custom plugin indexes）**，添加索引源（例如 `https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/index.json`），搜索 `kolmopdf` 即可安装。
 
-## 发版
-
-一个 `Release & Publish` workflow（`.github/workflows/release.yml`）全自动完成发版与发布：
-
-- **修改 `package.json` 的 `version` 并推送 `main`**——workflow 会与最新 `v*` tag 比对，在版本号变更提交上创建并推送 `v<版本号>` tag，然后在同一次运行中完成发布。tag 推送用的是工作流内部 token，不会重新触发 push 事件，所以本次运行直接继续发布。版本号未变化的推送为绿色空操作。
-- 也可以手动推送与版本一致的 tag：`git tag v1.0.0 && git push origin v1.0.0` 直接触发发布——tag 必须与 `package.json` 版本完全一致，否则任务失败。
-- 预发布版本（版本号含 `-`）发布到 `next` dist-tag，正式版本发布到 `latest`。
-- 发布使用 **pnpm**（`pnpm publish`），并采用 **npm Trusted Publishing（OpenID Connect）**：workflow 声明 `id-token: write`，npm 用 GitHub Actions 的 ID token 换取绑定到该 workflow 文件的短期发布令牌，provenance 证明自动生成（`--provenance`）——**无需 `NPM_TOKEN` secret**。
-- `pnpm publish` 会先跑 `pnpm check`（发布时打包的是刚构建的 `lib/`），然后发布到 npmjs 并创建带自动生成说明的 GitHub Release。
-- `Rebuild lib` workflow 会在每次推送到 `main` 时把提交的 `lib/` 与 `src/` 保持同步（Git 安装方式不执行 prepare 脚本）。
-- `CI` workflow 在每次 PR 与 main 推送时执行类型检查、测试与构建。
-
-一次性配置：在 npmjs.com 打开 `@kolmopdf/dsh-kolmopdf` → Settings → Trusted publishing，授权本仓库的 GitHub Actions（`.github/workflows/release.yml`）（公开仓库；发布需持有 `@kolmopdf` scope 权限）。也可以用 `npm trust` CLI 创建该 publisher。配置完成后可以吊销包的自动化 token——workflow 不会再发送任何 token。
-
-重启 profile：
+### 方式三：从 GitHub 安装
 
 ```bash
-dsh web
+dsh plugin --profile web add github:komoai2026/dsh-kolmopdf
 ```
 
-> `dsh plugin ... add` 会安装依赖，并且因为本包声明了 `dsh.bundle`，会加入 profile 的 layer 栈。单独 `pnpm add`、不走 `dsh plugin` 则不会。
+仓库内置已构建好的 `lib/` 产物并声明了 `dsh.bundle`，安装时无需执行额外构建脚本即可自动挂载；`@deepseek-ai/dsh-tools` 等宿主包均声明为可选 `peerDependencies`，复用宿主实例不冲突。
 
 ## 配置 API Key
 
 ### 方法一：Web 设置页（推荐）
 
-打开 DeepSeek Harness Web GUI：
+1. 打开 DeepSeek Harness Web / 桌面端界面。
+2. 进入 **Settings → KolmoPDF**。
+3. 填入从 <https://www.kolmopdf.com/api-keys> 获取的 API Key 并点击 **保存**。
 
-1. 点击左下角 **Settings / 设置**；
-2. 进入独立的 **KolmoPDF** 设置项；
-3. 输入 API Key 并保存。
-
-设置页把 Key 写入 DSH 凭据库（`$DSH_HOME/.credentials.yaml` 的 `KOLMOPDF_API_KEY` 引用），不经过设置文档 allowlist。若进程环境里已经有 `KOLMOPDF_API_KEY`，设置页会显示为只读（环境变量优先，不能覆盖）。
-
-如果尚未设置 Key，插件仍可启动；第一次需要鉴权的 Tool 调用会返回可操作提示。
-
-### 方法二：CLI
-
-安装包后，请通过 DeepSeek Harness 调用 CLI（直接打 `kolmopdf` 会提示找不到命令，因为它不在全局 PATH 上）：
+### 方法二：CLI（与设置页共享 `.credentials.yaml`）
 
 ```bash
 dsh plugin --profile web exec kolmopdf -- config set-key
 ```
 
-命令会用遮罩输入读取 Key，并写入 `$DSH_HOME/settings.yaml`（默认 `~/.dsh/settings.yaml`）中的 `kolmopdf.apiKey`。
+命令通过 DSH 文件锁与原子写入（`0600`）将 `KOLMOPDF_API_KEY` 保存到 `$DSH_HOME/.credentials.yaml`（`version: 1` / `refs.KOLMOPDF_API_KEY`），运行中的 DSH 会自动热感知变更。
 
 ```bash
-# 非交互传参（会进入 shell history，不推荐）
-dsh plugin --profile web exec kolmopdf -- config set-key sk-xxxxxxxxxxxxxxxx
-
-# 脚本/CI：从 stdin 读取
+# 脚本 / CI 通过 stdin 写入
 printf '%s' "$KOLMOPDF_API_KEY" | dsh plugin --profile web exec kolmopdf -- config set-key
 
-# 查看状态（不会输出 Key）
+# 查看配置状态（不会打印密钥）
 dsh plugin --profile web exec kolmopdf -- config status
 
-# 查看实际设置文件路径
+# 查看凭据文件路径
 dsh plugin --profile web exec kolmopdf -- config path
 
 # 清除已保存 Key
 dsh plugin --profile web exec kolmopdf -- config clear-key
-
-# 使用自定义 settings 文件
-dsh plugin --profile web exec kolmopdf -- config set-key --file D:/path/to/settings.yaml
 ```
-
-CLI 会尽量保留 YAML 注释；写入使用与 DSH 自身 settings 提供者相同的 `<file>.lock` 写锁与原子替换（`@deepseek-ai/dsh-atomic-write`），并把设置文件权限设为 owner-only（`0600`；Windows 上仍受 ACL 控制）。正在运行且启用了文件监听的 DSH 会热加载该修改。
 
 ### 方法三：环境变量
 
 ```bash
 export KOLMOPDF_API_KEY=sk-xxxxxxxxxxxxxxxx
+dsh web
 ```
 
 PowerShell：
@@ -147,13 +107,7 @@ $env:KOLMOPDF_API_KEY = 'sk-xxxxxxxxxxxxxxxx'
 dsh web
 ```
 
-环境变量需要在启动 DSH 前设置。可在 composition 中把 `apiKeyEnv` 改成其他变量名。
-
-解析顺序：CLI 写入的 `settings.apiKey` → 凭据库 / 环境变量（`KOLMOPDF_API_KEY`）。
-
 ## 可选配置
-
-可直接在 composition 的插件行提供 base 配置；用户 settings 层仍会覆盖它：
 
 ```yaml
 - insert:
@@ -169,42 +123,33 @@ dsh web
 
 | 字段 | 默认值 | 说明 |
 | --- | --- | --- |
-| `apiKey` | 未设置 | Secret；推荐由 GUI/CLI 写入，不要提交到 composition |
+| `apiKey` | 未设置 | Secret 覆盖项；推荐通过设置页或 CLI `.credentials.yaml` 管理 |
 | `apiKeyEnv` | `KOLMOPDF_API_KEY` | 环境变量 / 凭据引用名 |
-| `baseUrl` | `https://www.kolmopdf.com` | KolmoPDF 服务地址 |
-| `outputDir` | `./kolmopdf-output` | 结果输出目录（相对 DSH 启动目录） |
-| `pollIntervalMs` | `2000` | 轮询任务状态间隔 |
-| `maxPollMinutes` | `30` | 最长轮询分钟数 |
-| `httpTimeoutMs` | `60000` | 普通 HTTP 请求超时 |
-| `uploadTimeoutMs` | `600000` | 上传/下载超时 |
+| `baseUrl` | `https://www.kolmopdf.com` | KolmoPDF API 地址 |
+| `outputDir` | `./kolmopdf-output` | 结果输出目录（相对 DSH 工作目录） |
+| `pollIntervalMs` | `2000` | 状态轮询间隔（毫秒） |
+| `maxPollMinutes` | `30` | 最大轮询分钟数 |
+| `httpTimeoutMs` | `60000` | 普通 HTTP 请求超时（毫秒） |
+| `uploadTimeoutMs` | `600000` | 文件上传/结果下载超时（毫秒） |
 
-## 开发
+## 开发与测试
 
 ```bash
 corepack enable pnpm
 pnpm install
 pnpm check
-```
-
-`pnpm check` 依次运行 TypeScript 类型检查、Vitest 测试和生产构建。
-
-可选的宿主组合测试需要指定已安装的 Harness 包目录：
-
-```bash
-DSH_ROOT=/path/to/node_modules/@deepseek-ai/dsh pnpm test:host
+pnpm test:host
+pnpm test:client
 ```
 
 ## 安全说明
 
-- 不要把真实 API Key 写入仓库、README、截图或 issue。
-- Web 凭据 API 只返回是否已配置 / 是否可写，不返回 secret 内容。
-- CLI 状态命令只显示 configured/not configured。
-- 插件会读取 Tool 参数指定的本地 PDF/Markdown/ZIP，并把结果写入 `outputDir`；只在可信的 DSH composition 中启用它。
-- 输出目录先按 `realpath` 校验：`output_subdir` 及其中的符号链接都不能逃出 `outputDir`。
-- ZIP 下载使用路径穿越检查，拒绝绝对路径和 `../` 条目；解压上限为 10,000 个条目与 4 GiB 总解压大小，单次结果下载上限 2 GiB。
-- 输入文件上限 300 MB、最多 800 页（与 KolmoPDF 服务端限制一致），并在本地先校验后再上传；上传、轮询、下载与解压都会响应取消信号。
+- 请勿将真实 API Key 提交至代码仓库、配置文件或 Issue。
+- 凭据接口只返回是否已配置和是否可写，绝不回传密钥值。
+- 输出路径通过 `realpath` 校验，`output_subdir` 及符号链接无法逃逸 `outputDir`。
+- ZIP 解压严格拦截绝对路径与 `../` 路径穿越（上限 10,000 个条目、4 GiB 解压大小、2 GiB 下载大小）。
+- 输入文件限制 300 MB 与 800 页，在本地预检后再上传。
 
 ## License
 
 MIT
-

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "KolmoPDF",
+    "description": "高精度な PDF→Markdown/OCR（数式・表・レイアウト保持）、レイアウト維持 PDF 翻訳、Markdown から DOCX・PDF・HTML・LaTeX への変換。"
+  }
+}

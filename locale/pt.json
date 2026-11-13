@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "KolmoPDF",
+    "description": "Conversão de PDF para Markdown/OCR de alta fidelidade (fórmulas e tabelas), tradução de PDF preservando o layout e exportação para DOCX, PDF, HTML e LaTeX."
+  }
+}
