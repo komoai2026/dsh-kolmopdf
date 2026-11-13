@@ -7,7 +7,7 @@ import { withFileLock, writeFileAtomic } from "@deepseek-ai/dsh-atomic-write";
 import { Document, parseDocument } from "yaml";
 import { CREDENTIAL_REF, validateApiKey } from "./constants.js";
 
-const VERSION = "1.1.0";
+const VERSION = "1.1.1";
 
 function credentialsPath(args: string[]): string {
   const index = args.indexOf("--file");

@@ -4,6 +4,12 @@ All notable changes to `@kolmopdf/dsh-kolmopdf` are documented here.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-13
+
+### Fixed
+
+- Added explicit SemVer prerelease branches (`^0.2.0-rc.1 || ^0.2.1-0 || ^0.2.2-0 || ...`) to `engines.dsh` and `@deepseek-ai/dsh-*` `peerDependencies` so npm/pnpm peer resolution accepts `0.2.x` prerelease builds without `ERESOLVE` warnings.
+
 ## [1.1.0] - 2026-11-13
 
 ### Changed

@@ -1,6 +1,6 @@
 {
   "name": "@kolmopdf/dsh-kolmopdf",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Official KolmoPDF plugin for DeepSeek Harness: high-fidelity PDF to Markdown/OCR (formulas & tables), layout-preserving PDF translation, and Markdown export to DOCX, PDF, HTML, and LaTeX.",
   "author": "KolmoPDF <support@kolmopdf.com>",
   "icon": "./assets/icon.png",
@@ -85,7 +85,7 @@
   "license": "MIT",
   "engines": {
     "node": ">=20",
-    "dsh": ">=0.2.0-rc.1 <0.3.0"
+    "dsh": "^0.2.0-rc.1 || ^0.2.1-0 || ^0.2.2-0 || ^0.2.3-0 || ^0.2.4-0 || ^0.2.5-0"
   },
   "dependencies": {
     "pdf-lib": "^1.17.1",
@@ -94,17 +94,17 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.1.0",
-    "@deepseek-ai/dsh-api-remotes": ">=0.2.0-rc.1 <0.3.0",
-    "@deepseek-ai/dsh-atomic-write": ">=0.2.0-rc.1 <0.3.0",
-    "@deepseek-ai/dsh-client-locale": ">=0.2.0-rc.1 <0.3.0",
-    "@deepseek-ai/dsh-client-ui-primitives": ">=0.2.0-rc.1 <0.3.0",
-    "@deepseek-ai/dsh-client-ui-settings": ">=0.2.0-rc.1 <0.3.0",
-    "@deepseek-ai/dsh-client-ui-slots": ">=0.2.0-rc.1 <0.3.0",
-    "@deepseek-ai/dsh-credentials": ">=0.2.0-rc.1 <0.3.0",
-    "@deepseek-ai/dsh-home-paths": ">=0.2.0-rc.1 <0.3.0",
-    "@deepseek-ai/dsh-settings": ">=0.2.0-rc.1 <0.3.0",
-    "@deepseek-ai/dsh-system-prompt": ">=0.2.0-rc.1 <0.3.0",
-    "@deepseek-ai/dsh-tools": ">=0.2.0-rc.1 <0.3.0",
+    "@deepseek-ai/dsh-api-remotes": "^0.2.0-rc.1 || ^0.2.1-0 || ^0.2.2-0 || ^0.2.3-0 || ^0.2.4-0 || ^0.2.5-0",
+    "@deepseek-ai/dsh-atomic-write": "^0.2.0-rc.1 || ^0.2.1-0 || ^0.2.2-0 || ^0.2.3-0 || ^0.2.4-0 || ^0.2.5-0",
+    "@deepseek-ai/dsh-client-locale": "^0.2.0-rc.1 || ^0.2.1-0 || ^0.2.2-0 || ^0.2.3-0 || ^0.2.4-0 || ^0.2.5-0",
+    "@deepseek-ai/dsh-client-ui-primitives": "^0.2.0-rc.1 || ^0.2.1-0 || ^0.2.2-0 || ^0.2.3-0 || ^0.2.4-0 || ^0.2.5-0",
+    "@deepseek-ai/dsh-client-ui-settings": "^0.2.0-rc.1 || ^0.2.1-0 || ^0.2.2-0 || ^0.2.3-0 || ^0.2.4-0 || ^0.2.5-0",
+    "@deepseek-ai/dsh-client-ui-slots": "^0.2.0-rc.1 || ^0.2.1-0 || ^0.2.2-0 || ^0.2.3-0 || ^0.2.4-0 || ^0.2.5-0",
+    "@deepseek-ai/dsh-credentials": "^0.2.0-rc.1 || ^0.2.1-0 || ^0.2.2-0 || ^0.2.3-0 || ^0.2.4-0 || ^0.2.5-0",
+    "@deepseek-ai/dsh-home-paths": "^0.2.0-rc.1 || ^0.2.1-0 || ^0.2.2-0 || ^0.2.3-0 || ^0.2.4-0 || ^0.2.5-0",
+    "@deepseek-ai/dsh-settings": "^0.2.0-rc.1 || ^0.2.1-0 || ^0.2.2-0 || ^0.2.3-0 || ^0.2.4-0 || ^0.2.5-0",
+    "@deepseek-ai/dsh-system-prompt": "^0.2.0-rc.1 || ^0.2.1-0 || ^0.2.2-0 || ^0.2.3-0 || ^0.2.4-0 || ^0.2.5-0",
+    "@deepseek-ai/dsh-tools": "^0.2.0-rc.1 || ^0.2.1-0 || ^0.2.2-0 || ^0.2.3-0 || ^0.2.4-0 || ^0.2.5-0",
     "@deepseek-ai/schemastery": "^3.19.0",
     "react": "^18.2.0 || ^19.0.0"
   },
